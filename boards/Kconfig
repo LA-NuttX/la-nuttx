@@ -1664,6 +1664,13 @@ config ARCH_BOARD_QEMU_RV_VIRT
 		This is the board configuration for the port of NuttX to the
 		QEMU RV32 Virt board. This board features the QEMU RV32 CPU.
 
+config ARCH_BOARD_QEMU_LA_VIRT
+	bool "QEMU LA Virt"
+	depends on ARCH_CHIP_QEMU_LA
+	---help---
+		This is the board configuration for the port of NuttX to the
+		QEMU LA Virt board. This board features the QEMU LS3A5000 CPU.
+
 config ARCH_BOARD_S32K118EVB
 	bool "NXP S32K118EVB"
 	depends on ARCH_CHIP_S32K118
@@ -2847,6 +2854,7 @@ config ARCH_BOARD
 	default "mr-canhubk3"              if ARCH_BOARD_MR_CANHUBK3
 	default "rv32m1-vega"              if ARCH_BOARD_RV32M1_VEGA
 	default "rv-virt"                  if ARCH_BOARD_QEMU_RV_VIRT
+	default "la-virt"                  if ARCH_BOARD_QEMU_LA_VIRT
 	default "sabre-6quad"              if ARCH_BOARD_SABRE_6QUAD
 	default "qemu-armv8a"              if ARCH_BOARD_QEMU_ARMV8A
 	default "pinephone"                if ARCH_BOARD_PINEPHONE

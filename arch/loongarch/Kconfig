@@ -1,0 +1,190 @@
+#
+# For a description of the syntax of this configuration file,
+# see the file kconfig-language.txt in the NuttX tools repository.
+#
+
+if ARCH_LOONGARCH
+comment "LOONGARCH Options"
+
+choice
+	prompt "LOONGARCH chip selection"
+	default ARCH_CHIP_LOONGARCH_CUSTOM
+
+config ARCH_CHIP_LS3A5000
+	bool "Loongson 3A5000"
+	select ARCH_LA64
+	select ARCH_HAVE_FPU if !LS3A5000_WITH_QEMU
+	select ARCH_HAVE_DPFPU if !LS3A5000_WITH_QEMU
+	select ARCH_HAVE_MPU
+	select ARCH_HAVE_TESTSET
+	select ARCH_HAVE_MULTICPU
+	select ARCH_HAVE_MISALIGN_EXCEPTION
+	select ONESHOT
+	select ALARM_ARCH
+	---help---
+		Loongson 3A5000 processor (Loongarch 64bit core)
+
+config ARCH_CHIP_QEMU_LA
+	bool "QEMU LA"
+	select ARCH_HAVE_FPU if EXPERIMENTAL
+	select ARCH_HAVE_DPFPU if EXPERIMENTAL
+	select ARCH_HAVE_MULTICPU
+	select ARCH_HAVE_MPU
+	select ARCH_HAVE_MMU
+	select ARCH_MMU_TYPE_32MB if ARCH_CHIP_QEMU_LA64
+	select ARCH_HAVE_ADDRENV
+	select ARCH_NEED_ADDRENV_MAPPING
+	select ARCH_HAVE_PLV0_MODE
+	select ONESHOT
+	select ALARM_ARCH
+	---help---
+		QEMU Generic LA64 processor
+
+config ARCH_CHIP_LOONGARCH_CUSTOM
+	bool "Custom LOONGARCH chip"
+	select ARCH_CHIP_CUSTOM
+	---help---
+		Select this option if there is no directory for the chip under arch/loongarch/src/.
+
+endchoice
+
+config ARCH_LA32
+	bool
+	default n
+
+config ARCH_LA64
+	bool
+	default n
+	select LIBC_ARCH_ELF_64BIT if LIBC_ARCH_ELF
+# ? LIBC_ARCH_ELF_64BIT,LIBC_ARCH_ELF是啥
+
+# ？ loongarch的指令集扩展
+config ARCH_LA_ISA_LBT
+	bool
+	default n
+
+config ARCH_LA_ISA_LSX
+	bool
+	default n
+# 	select ARCH_HAVE_TESTSET
+
+config ARCH_LA_ISA_LASX
+	bool
+	default n
+
+config ARCH_LA_ISA_LVZ
+	bool
+	default n
+
+config ARCH_FAMILY
+	string
+	default "la32"		if ARCH_LA32
+	default "la64"		if ARCH_LA64
+
+config ARCH_CHIP
+	string
+	default "LS3A5000"	if ARCH_CHIP_LS3A5000
+	default "qemu-la"	if ARCH_CHIP_QEMU_LA
+
+config ARCH_MMU_TYPE_32MB
+	bool
+	default n
+
+config ARCH_HAVE_PLV0_MODE
+	bool
+	default n
+
+# config ARCH_HAVE_MISALIGN_EXCEPTION
+# 	bool
+# 	default n
+# 	---help---
+# 		The chip will raise a exception while misaligned memory access.
+
+# config RISCV_MISALIGNED_HANDLER
+# 	bool "Software misaligned memory access handler"
+# 	depends on ARCH_HAVE_MISALIGN_EXCEPTION
+# 	default y
+
+# Option to run NuttX in supervisor mode. This is obviously not usable in
+# flat mode, is questionable in protected mode, but is mandatory in kernel
+# mode.
+#
+# Kernel mode requires this as M-mode uses flat addressing and the kernel
+# memory must be mapped in order to share memory between the kernel and
+# different user tasks which reside in virtual memory.
+
+config ARCH_USE_PLV0_MODE
+	bool "Run the NuttX kernel in PLV0 mode"
+	default n
+	depends on ARCH_HAVE_PLV0_MODE && BUILD_KERNEL && ARCH_USE_MMU
+	---help---
+		LoongArch needs to make some change.
+		Most of the RISC-V implementations run in M-mode (flat addressing)
+		and/or U-mode (in case of separate kernel-/userspaces). This provides
+		an option to run the kernel in S-mode, if the target supports it.
+
+# MPU has certain architecture dependent configurations, which are presented
+# here. Default is that the full RISC-V PMP specification is supported.
+
+config PMP_HAS_LIMITED_FEATURES
+	bool
+	default n
+
+config ARCH_MPU_MIN_BLOCK_SIZE
+	int "Minimum MPU (PMP) block size"
+	default 4	if !PMP_HAS_LIMITED_FEATURES
+
+config ARCH_MPU_HAS_TOR
+	bool "PMP supports TOR"
+	default y	if !PMP_HAS_LIMITED_FEATURES
+
+config ARCH_MPU_HAS_NO4
+	bool "PMP supports NO4"
+	default y	if !PMP_HAS_LIMITED_FEATURES
+
+config ARCH_MPU_HAS_NAPOT
+	bool "PMP supports NAPOT"
+	default y	if !PMP_HAS_LIMITED_FEATURES
+
+choice
+	prompt "Toolchain Selection"
+	default LOONGARCH_TOOLCHAIN_GNU_LA
+
+config LOONGARCH_TOOLCHAIN_GNU_LA
+	bool "Generic GNU RVG toolchain"
+	select ARCH_TOOLCHAIN_GNU
+	---help---
+		This option should work for any modern GNU toolchain (GCC 8.3.0 or newer)
+		configured for loongarch64-linux-gnu.
+
+endchoice
+
+
+config LOONGARCH_SEMIHOSTING_HOSTFS
+	bool "Semihosting HostFS"
+	depends on FS_HOSTFS
+	---help---
+		Mount HostFS through semihosting.
+
+# 		This doesn't support some directory operations like readdir because
+# 		of the limitations of semihosting mechanism.
+
+if LOONGARCH_SEMIHOSTING_HOSTFS
+
+config LOONGARCH_SEMIHOSTING_HOSTFS_CACHE_COHERENCE
+	bool "Cache coherence in semihosting hostfs"
+	depends on ARCH_DCACHE
+	---help---
+		Flush & Invalidte cache before & after bkpt instruction.
+
+endif
+
+if ARCH_CHIP_LS3A5000
+source "arch/loongarch/src/LS3A5000/Kconfig"
+endif
+
+if ARCH_CHIP_QEMU_LA
+source "arch/loongarch/src/qemu-la/Kconfig"
+endif
+
+endif

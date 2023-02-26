@@ -20,24 +20,22 @@ config ARCH_CHIP_QEMU_LA64
 
 endchoice
 
-config ARCH_CHIP_QEMU_LA_ISA_LBT
-    bool "Standard Extension for Loongson Binary Translation Instructions"
-    default n
-    select ARCH_LA_ISA_LBT
+config ARCH_CHIP_QEMU_ARCH_LA_ISA_NATIVE
+	bool "Selects the CPU at compilation time"
+	default n
+    select ARCH_LA_ISA_NATIVE
 
-config ARCH_CHIP_QEMU_LA_ISA_LSX
-    bool "Standard Extension for Loongson SIMD Instructions"
-    default n
-    select ARCH_LA_ISA_LSX
+config ARCH_CHIP_QEMU_LA_ISA_LOONGARCH64
+    bool "A generic CPU with 64-bit extensions"
+    default y
+    select ARCH_LA_ISA_LOONGARCH64
 
-config ARCH_CHIP_QEMU_LA_ISA_LASX
-    bool "Standard Extension for Loongson Advanced SIMD Instructions"
+config ARCH_CHIP_QEMU_LA_ISA_LBT_LSX_LAXS_LVZ
+    bool "Binary Translation Instructions, SIMD, Advanced SIMD and Virtualization Instructions"
     default n
-    select ARCH_LA_ISA_LASX
-
-config ARCH_CHIP_QEMU_LA_ISA_LVZ
-    bool "Standard Extension for Loongson Virtualization Instructions"
-    default n
-    select ARCH_LA_ISA_LVZ
+    select ARCH_LA_ISA_LBT_LSX_LASX_LVZ
+    ---help---
+        Extension for Loongson Binary Translation Instructions,
+        SIMD Instructions, Advanced SIMD Instructions and Virtualization Instructions
 
 endif

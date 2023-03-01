@@ -32,6 +32,7 @@
 #  include <sys/types.h>
 #  include <stdint.h>
 #  include <syscall.h>
+#  include <larchintrin.h>
 #endif
 
 #include <nuttx/irq.h>
@@ -41,16 +42,14 @@
 /****************************************************************************
  * Pre-processor Definitions
  ****************************************************************************/
-
-#if defined(CONFIG_ARCH_QPFPU)
-#  define FLOAD     __STR(flq)
-#  define FSTORE    __STR(fsq)
-#elif defined(CONFIG_ARCH_DPFPU)
-#  define FLOAD     __STR(fld)
-#  define FSTORE    __STR(fsd)
-#else
-#  define FLOAD     __STR(flw)
-#  define FSTORE    __STR(fsw)
+#ifdef CONFIG_ARCH_FPU
+#  ifdef CONFIG_ARCH_LA32
+#     define FLOAD     __STR(fld.s)
+#     define FSTORE    __STR(fst.s)
+#  else
+#     define FLOAD     __STR(fld.d)
+#     define FSTORE    __STR(fst.d)
+#  endif
 #endif
 
 #ifdef CONFIG_ARCH_LA32
@@ -92,8 +91,8 @@
  * only a reference stored in TCB.
  */
 
-#define riscv_savestate(regs) (regs = (uintptr_t *)CURRENT_REGS)
-#define riscv_restorestate(regs) (CURRENT_REGS = regs)
+#define loongarch_savestate(regs) (regs = (uintptr_t *)CURRENT_REGS)
+#define loongarch_restorestate(regs) (CURRENT_REGS = regs)
 
 /* Determine which (if any) console driver to use.  If a console is enabled
  * and no other console device is specified, then a serial console is
@@ -152,35 +151,42 @@ static inline void iocsr_write64(unsigned long val, unsigned int reg)
 }
 
 
-#define READ_CSR(reg) \
-  ({ \
-     uintptr_t reg##_val; \
-     __asm__ __volatile__("csrrd %0, " __STR(reg) : "=r"(reg##_val)::"memory"); \
-     reg##_val; \
-  })
+// #define READ_CSR(reg) 
+//   ({ 
+//      uintptr_t reg##_val; 
+//      __asm__ __volatile__("csrrd %0, " __STR(reg) : "=r"(reg##_val)::"memory"); 
+//      reg##_val; 
+//   })
+#define READ_CSR(reg) __csrrd(reg)
 
-#define READ_AND_SET_CSR(reg, bits) \
-  ({ \
-     uintptr_t reg##_val=bits; \
-     __asm__ __volatile__("csrxchg %0, %0, " __STR(reg): "+r"(reg##_val)::"memory"); \
-     reg##_val; \
-  })
+// #define READ_AND_SET_CSR(reg, bits) 
+//   ({ 
+//      uintptr_t reg##_val=bits; 
+//      __asm__ __volatile__("csrxchg %0, %0, " __STR(reg): "+r"(reg##_val)::"memory"); 
+//      reg##_val; 
+//   })
+#define READ_AND_SET_CSR(reg, bits) __csrxchg(bits, bits, reg)
 
-#define WRITE_CSR(reg, val) \
-  ({ \
-     __asm__ __volatile__("csrwr %0, " __STR(reg):: "r"(val):"memory"); \
-  })
+// #define WRITE_CSR(reg, val) 
+//   ({ 
+//      __asm__ __volatile__("csrwr %0, " __STR(reg):: "r"(val):"memory"); 
+//   })
+#define WRITE_CSR64(reg, val) __dcsrwr(val, reg)
 
-#define SET_CSR(reg, bits) \
-  ({ \
-    uintptr_t reg##_val=bits; \
-     __asm__ __volatile__("csrxchg %0, %0, " __STR(reg) :"+r"(reg##_val)::"memory"); \
-  })
+#define WRITE_CSR32(reg, val) __csrwr(val, reg)
 
-#define CLEAR_CSR(reg, bits) \
-  ({ \
-     __asm__ __volatile__("csrxchg $r0, %0, " __STR(reg) :: "r" (bits):"memory"); \
-  })
+// #define SET_CSR(reg, bits) 
+//   ({ 
+//     uintptr_t reg##_val=bits; 
+//      __asm__ __volatile__("csrxchg %0, %0, " __STR(reg) :"+r"(reg##_val)::"memory"); 
+//   })
+#define SET_CSR(reg, bits) __csrxchg(bits, bits, reg)
+
+// #define CLEAR_CSR(reg, bits) 
+//   ({ 
+//      __dcsrxchg(bits, bits, __STR(reg));
+//   })
+#define CLEAR_CSR(reg, bits) __csrxchg(0, bits, reg)
 
 #endif
 
@@ -220,7 +226,7 @@ void riscv_ack_irq(int irq);
 
 void riscv_copystate(uintptr_t *dest, uintptr_t *src);
 
-void riscv_sigdeliver(void);
+void loongarch_sigdeliver(void);
 int loongarch_swint(int irq, void *context, void *arg);
 uintptr_t loongarch_get_newprmd(void);
 void loongarch_exception_attach(void);

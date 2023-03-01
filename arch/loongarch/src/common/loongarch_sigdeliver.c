@@ -43,7 +43,7 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: riscv_sigdeliver
+ * Name: loongarch_sigdeliver
  *
  * Description:
  *   This is the a signal handling trampoline.  When a signal action was
@@ -52,7 +52,7 @@
  *
  ****************************************************************************/
 
-void riscv_sigdeliver(void)
+void loongarch_sigdeliver(void)
 {
   struct tcb_s *rtcb = this_task();
   uintptr_t *regs = rtcb->xcp.saved_regs;
@@ -108,9 +108,8 @@ void riscv_sigdeliver(void)
    * alter errno), then disable interrupts again and restore the original
    * errno that is needed by the user logic (it is probably EINTR).
    */
-  assert(0);
-  // sinfo("Resuming EPC: %" PRIxREG " INT_CTX: %" PRIxREG "\n",
-  //       regs[REG_EPC], regs[REG_INT_CTX]);
+  sinfo("Resuming EPC: %" PRIxREG " INT_CTX: %" PRIxREG "\n",
+        regs[REG_EPC], regs[REG_CSR_PRMD]);
 
 #ifdef CONFIG_SMP
   /* Restore the saved 'irqcount' and recover the critical section
@@ -145,6 +144,5 @@ void riscv_sigdeliver(void)
    */
 
   board_autoled_off(LED_SIGNAL);
-  assert(0);
   loongarch_fullcontextrestore(regs);
 }

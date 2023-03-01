@@ -79,7 +79,7 @@
 #ifndef CONFIG_SMP
 void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
 {
-  uintptr_t int_ctx;
+  uintptr_t prmdregval;
 
   sinfo("tcb=%p sigdeliver=%p\n", tcb, sigdeliver);
 
@@ -126,7 +126,7 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
                * been delivered.
                */
 
-              riscv_savestate(tcb->xcp.saved_regs);
+              loongarch_savestate(tcb->xcp.saved_regs);
 
               /* Duplicate the register context.  These will be
                * restored by the signal trampoline after the signal has
@@ -145,24 +145,20 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
                */
 
               tcb->xcp.sigdeliver       = sigdeliver;
-              CURRENT_REGS[REG_EPC]     = (uintptr_t)riscv_sigdeliver;
-              assert(0);
-              // int_ctx                   = CURRENT_REGS[REG_INT_CTX];
-              // int_ctx                  &= ~STATUS_PIE;
+              CURRENT_REGS[REG_EPC]     = (uintptr_t)loongarch_sigdeliver;
+              prmdregval                = CURRENT_REGS[REG_CSR_PRMD];
+              prmdregval               &= ~CSR_PRMD_PIE;
 #ifndef CONFIG_BUILD_FLAT
-              int_ctx                  |= STATUS_PPP;
-#endif
+              prmdregval               |= 0x00;
+#endif              
+              CURRENT_REGS[REG_CSR_PRMD]= prmdregval;
+              CURRENT_REGS[REG_SP]      = (uintptr_t)CURRENT_REGS + XCPTCONTEXT_SIZE;
 
-              // CURRENT_REGS[REG_INT_CTX] = int_ctx;
-
-              // CURRENT_REGS[REG_SP] = (uintptr_t)CURRENT_REGS +
-              //                          XCPTCONTEXT_SIZE;
-
-              // sinfo("PC/STATUS Saved: %" PRIxREG "/%" PRIxREG
-              //       " New: %" PRIxREG "/%" PRIxREG "\n",
-              //       tcb->xcp.saved_regs[REG_EPC],
-              //       tcb->xcp.saved_regs[REG_INT_CTX],
-              //       CURRENT_REGS[REG_EPC], CURRENT_REGS[REG_INT_CTX]);
+              sinfo("PC/STATUS Saved: %" PRIxREG "/%" PRIxREG
+                    " New: %" PRIxREG "/%" PRIxREG "\n",
+                    tcb->xcp.saved_regs[REG_EPC],
+                    tcb->xcp.saved_regs[REG_CSR_PRMD],
+                    CURRENT_REGS[REG_EPC], CURRENT_REGS[REG_CSR_PRMD]);
             }
         }
 
@@ -194,21 +190,19 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
                                          XCPTCONTEXT_SIZE);
 
           memcpy(tcb->xcp.regs, tcb->xcp.saved_regs, XCPTCONTEXT_SIZE);
-          assert(0);
-          // tcb->xcp.regs[REG_SP]       = (uintptr_t)tcb->xcp.regs +
-          //                                 XCPTCONTEXT_SIZE;
+          tcb->xcp.regs[REG_SP]       = (uintptr_t)tcb->xcp.regs + XCPTCONTEXT_SIZE;
 
-          // tcb->xcp.regs[REG_EPC]      = (uintptr_t)riscv_sigdeliver;
-          // int_ctx                     = tcb->xcp.regs[REG_INT_CTX];
-          // int_ctx                    &= ~STATUS_PIE;
+          tcb->xcp.regs[REG_EPC]      = (uintptr_t)loongarch_sigdeliver;
+          prmdregval                  = tcb->xcp.regs[REG_CSR_PRMD];
+          prmdregval                 &= ~CSR_PRMD_PIE;
 
-          // tcb->xcp.regs[REG_INT_CTX]  = int_ctx;
+          tcb->xcp.regs[REG_CSR_PRMD]  = prmdregval;
 
-          // sinfo("PC/STATUS Saved: %" PRIxREG "/%" PRIxREG
-          //       " New: %" PRIxREG "/%" PRIxREG "\n",
-          //       tcb->xcp.saved_regs[REG_EPC],
-          //       tcb->xcp.saved_regs[REG_INT_CTX],
-          //       tcb->xcp.regs[REG_EPC], tcb->xcp.regs[REG_INT_CTX]);
+          sinfo("PC/STATUS Saved: %" PRIxREG "/%" PRIxREG
+                " New: %" PRIxREG "/%" PRIxREG "\n",
+                tcb->xcp.saved_regs[REG_EPC],
+                tcb->xcp.saved_regs[REG_CSR_PRMD],
+                tcb->xcp.regs[REG_EPC], tcb->xcp.regs[REG_CSR_PRMD]);
         }
     }
 }
@@ -309,7 +303,7 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
                   tcb->xcp.regs[REG_SP]      = (uintptr_t)tcb->xcp.regs +
                                                  XCPTCONTEXT_SIZE;
 
-                  tcb->xcp.regs[REG_EPC]     = (uintptr_t)riscv_sigdeliver;
+                  tcb->xcp.regs[REG_EPC]     = (uintptr_t)loongarch_sigdeliver;
                   int_ctx                    = tcb->xcp.regs[REG_INT_CTX];
                   int_ctx                   &= ~STATUS_PIE;
 #ifndef CONFIG_BUILD_FLAT
@@ -349,7 +343,7 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
                    * privileged thread mode.
                    */
 
-                  CURRENT_REGS[REG_EPC]     = (uintptr_t)riscv_sigdeliver;
+                  CURRENT_REGS[REG_EPC]     = (uintptr_t)loongarch_sigdeliver;
 
                   int_ctx                   = CURRENT_REGS[REG_INT_CTX];
                   int_ctx                  &= ~STATUS_PIE;
@@ -425,7 +419,7 @@ void up_schedule_sigaction(struct tcb_s *tcb, sig_deliver_t sigdeliver)
            * here.
            */
 
-          tcb->xcp.regs[REG_EPC]     = (uintptr_t)riscv_sigdeliver;
+          tcb->xcp.regs[REG_EPC]     = (uintptr_t)loongarch_sigdeliver;
 
           int_ctx                    = tcb->xcp.regs[REG_INT_CTX];
           int_ctx                   &= ~STATUS_PIE;

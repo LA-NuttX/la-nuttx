@@ -54,10 +54,10 @@ static uint8_t s_last_regs[XCPTCONTEXT_SIZE];
  ****************************************************************************/
 
 /****************************************************************************
- * Name: riscv_stackdump
+ * Name: loongarch_stackdump
  ****************************************************************************/
 
-static void riscv_stackdump(uintptr_t sp, uintptr_t stack_top)
+static void loongarch_stackdump(uintptr_t sp, uintptr_t stack_top)
 {
   uintptr_t stack;
 
@@ -137,10 +137,10 @@ static inline void loongarch_registerdump(volatile uintptr_t *regs)
 }
 
 /****************************************************************************
- * Name: riscv_dump_task
+ * Name: loongarch_dump_task
  ****************************************************************************/
 
-static void riscv_dump_task(struct tcb_s *tcb, void *arg)
+static void loongarch_dump_task(struct tcb_s *tcb, void *arg)
 {
   char args[64] = "";
 #ifdef CONFIG_STACK_COLORATION
@@ -247,10 +247,10 @@ static void riscv_dump_backtrace(struct tcb_s *tcb, void *arg)
 #endif
 
 /****************************************************************************
- * Name: riscv_showtasks
+ * Name: loongarch_showtasks
  ****************************************************************************/
 
-static inline void riscv_showtasks(void)
+static inline void loongarch_showtasks(void)
 {
 #if CONFIG_ARCH_INTERRUPTSTACK > 15
 #  ifdef CONFIG_STACK_COLORATION
@@ -304,17 +304,17 @@ static inline void riscv_showtasks(void)
         );
 #endif
 
-  nxsched_foreach(riscv_dump_task, NULL);
+  nxsched_foreach(loongarch_dump_task, NULL);
 #ifdef CONFIG_SCHED_BACKTRACE
   nxsched_foreach(riscv_dump_backtrace, NULL);
 #endif
 }
 
 /****************************************************************************
- * Name: riscv_dump_stack
+ * Name: loongarch_dump_stack
  ****************************************************************************/
 
-static void riscv_dump_stack(const char *tag, uintptr_t sp,
+static void loongarch_dump_stack(const char *tag, uintptr_t sp,
                              uintptr_t base, uint32_t size, bool force)
 {
   uintptr_t top = base + size;
@@ -326,7 +326,7 @@ static void riscv_dump_stack(const char *tag, uintptr_t sp,
 
   if (sp >= base && sp < top)
     {
-      riscv_stackdump(sp, top);
+      loongarch_stackdump(sp, top);
     }
   else
     {
@@ -349,7 +349,7 @@ static void riscv_dump_stack(const char *tag, uintptr_t sp,
             }
 #endif
 
-          riscv_stackdump(base, base + size);
+          loongarch_stackdump(base, base + size);
         }
     }
 }
@@ -388,7 +388,7 @@ static void loongarch_dumpstate(void)
   /* Get the limits on the interrupt stack memory */
 
 #if CONFIG_ARCH_INTERRUPTSTACK > 15
-  riscv_dump_stack("IRQ", sp,
+  loongarch_dump_stack("IRQ", sp,
                    (uintptr_t)g_intstackalloc,
                    (CONFIG_ARCH_INTERRUPTSTACK & ~15),
                    !!CURRENT_REGS);
@@ -398,7 +398,7 @@ static void loongarch_dumpstate(void)
     }
 #endif
 
-  riscv_dump_stack("User", sp,
+  loongarch_dump_stack("User", sp,
                    (uintptr_t)rtcb->stack_base_ptr,
                    (uint32_t)rtcb->adj_stack_size,
 #ifdef CONFIG_ARCH_KERNEL_STACK
@@ -409,7 +409,7 @@ static void loongarch_dumpstate(void)
                 );
 
 #ifdef CONFIG_ARCH_KERNEL_STACK
-  riscv_dump_stack("Kernel", sp,
+  loongarch_dump_stack("Kernel", sp,
                    (uintptr_t)rtcb->xcp.kstack,
                    CONFIG_ARCH_KERNEL_STACKSIZE,
                    false);
@@ -434,5 +434,5 @@ void up_assert(const char *filename, int lineno)
 
   /* Dump the state of all tasks (if available) */
 
-  riscv_showtasks();
+  loongarch_showtasks();
 }

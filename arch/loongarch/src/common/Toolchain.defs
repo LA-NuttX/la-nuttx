@@ -42,8 +42,9 @@ endif
 #  ARCHOPTIMIZATION The optimization level that results in
 #                   reliable code generation.
 #
-
-ifeq ($(CONFIG_DEBUG_CUSTOMOPT),y)
+ifeq ($(CONFIG_DEBUG_NOOPT),y)
+  ARCHOPTIMIZATION += -O0
+else ifeq ($(CONFIG_DEBUG_CUSTOMOPT),y)
   ARCHOPTIMIZATION += $(CONFIG_DEBUG_OPTLEVEL)
 else ifeq ($(CONFIG_DEBUG_FULLOPT),y)
   ARCHOPTIMIZATION += -Os
@@ -53,11 +54,11 @@ ifneq ($(CONFIG_DEBUG_NOOPT),y)
   ARCHOPTIMIZATION += -fno-strict-aliasing
 endif
 
-ifeq ($(CONFIG_FRAME_POINTER),y)
-  ARCHOPTIMIZATION += -fno-omit-frame-pointer -fno-optimize-sibling-calls
-else
-  ARCHOPTIMIZATION += -fomit-frame-pointer
-endif
+# ifeq ($(CONFIG_FRAME_POINTER),y)
+#   ARCHOPTIMIZATION += -fno-omit-frame-pointer -fno-optimize-sibling-calls
+# else
+#   ARCHOPTIMIZATION += -fomit-frame-pointer
+# endif
 
 ifeq ($(CONFIG_STACK_CANARIES),y)
   ARCHOPTIMIZATION += -fstack-protector-all
@@ -91,7 +92,7 @@ endif
 
 ifeq ($(CONFIG_DEBUG_OPT_UNUSED_SECTIONS),y)
   LDFLAGS          += --gc-sections
-  ARCHOPTIMIZATION += -ffunction-sections -fdata-sections
+#   ARCHOPTIMIZATION += -ffunction-sections -fdata-sections
 endif
 
 LDFLAGS += -nostdlib
@@ -103,7 +104,8 @@ ifeq ($(CONFIG_DEBUG_LINK_MAP),y)
 endif
 
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
-  ARCHOPTIMIZATION += -g -ggdb
+#  ARCHOPTIMIZATION += -g -ggdb
+  ARCHOPTIMIZATION += -g
 endif
 
 # Generic GNU LA toolchain

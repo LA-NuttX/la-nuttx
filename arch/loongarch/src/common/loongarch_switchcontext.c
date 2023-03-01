@@ -69,7 +69,7 @@ void up_switch_context(struct tcb_s *tcb, struct tcb_s *rtcb)
        * Just copy the CURRENT_REGS into the OLD rtcb.
        */
 
-      riscv_savestate(rtcb->xcp.regs);
+      loongarch_savestate(rtcb->xcp.regs);
 
       /* Update scheduler parameters */
 
@@ -79,7 +79,7 @@ void up_switch_context(struct tcb_s *tcb, struct tcb_s *rtcb)
        * changes will be made when the interrupt returns.
        */
 
-      riscv_restorestate(tcb->xcp.regs);
+      loongarch_restorestate(tcb->xcp.regs);
     }
 
   /* No, then we will need to perform the user context switch */

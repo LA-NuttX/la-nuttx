@@ -45,7 +45,8 @@ __start:
   /* Load cpuid */
 
   csrrd   $a0, LOONGARCH_CSR_CPUID
-
+  bstrpick.d  $a0, $a0, 8, 0
+  
   /* Set stack pointer to the idle thread stack: QEMU_LA_IDLESTACK_TOP = QEMU_LA_IDLESTACK_BASE + QEMU_LA_IDLESTACK_SIZE */
 
   bnez    $a0, 1f
@@ -99,12 +100,12 @@ __start:
 
 2:
 
-  /* Set Direct Mapping Window0: 0x0000 xxxx xxxx xxxx, PLV0, no cache for devices, like uart */
-  li.d    $t0, 0x0000000000000001
+  /* Set Direct Mapping Window0: 0x9000 xxxx xxxx xxxx, PLV0, Coherent Cached */
+  li.d    $t0, 0x9000000000000011
   csrwr   $t0, LOONGARCH_CSR_DMWIN0
 
-  /* Set Direct Mapping Window1: 0x9000 xxxx xxxx xxxx, PLV0, Coherent Cached */
-  li.d		$t0, 0x9000000000000011
+  /* Set Direct Mapping Window1: 0x0000 xxxx xxxx xxxx, PLV0, no cache for devices, like uart */
+  li.d		$t0, 0x0000000000000001
 	csrwr		$t0, LOONGARCH_CSR_DMWIN1
 
   /* Disable all interrupts and set initial value in LOONGARCH_CSR_CRMD */

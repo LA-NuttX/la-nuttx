@@ -102,9 +102,7 @@ pid_t up_vfork(const struct vfork_s *context)
   struct tcb_s *parent = this_task();
   struct task_tcb_s *child;
   uintptr_t newsp;
-#ifdef CONFIG_RISCV_FRAMEPOINTER
   uintptr_t newfp;
-#endif
   uintptr_t newtop;
   uintptr_t stacktop;
   uintptr_t stackutil;
@@ -112,27 +110,13 @@ pid_t up_vfork(const struct vfork_s *context)
   sinfo("s0:%" PRIxREG " s1:%" PRIxREG " s2:%" PRIxREG " s3:%" PRIxREG ""
         " s4:%" PRIxREG "\n",
         context->s0, context->s1, context->s2, context->s3, context->s4);
-#ifdef CONFIG_RISCV_FRAMEPOINTER
-  sinfo("s5:%" PRIxREG " s6:%" PRIxREG " s7:%" PRIxREG "\n",
-        context->s5, context->s6, context->s7);
-#ifdef RISCV_SAVE_GP
-  sinfo("fp:%" PRIxREG " sp:%" PRIxREG " ra:%" PRIxREG " gp:%" PRIxREG "\n",
-        context->fp, context->sp, context->ra, context->gp);
-#else
-  sinfo("fp:%" PRIxREG " sp:%" PRIxREG " ra:%" PRIxREG "\n",
-        context->fp context->sp, context->ra);
-#endif
-#else
-  sinfo("s5:%" PRIxREG " s6:%" PRIxREG " s7:%" PRIxREG " s8:%" PRIxREG "\n",
-        context->s5, context->s6, context->s7, context->s8);
-#ifdef RISCV_SAVE_GP
-  sinfo("sp:%" PRIxREG " ra:%" PRIxREG " gp:%" PRIxREG "\n",
-        context->sp, context->ra, context->gp);
-#else
+  sinfo("s5:%" PRIxREG " s6:%" PRIxREG " s7:%" PRIxREG " s8:%" PRIxREG ""
+        " s9/fp:%" PRIxREG "\n",
+        context->s5, context->s6, context->s7, context->s8, context->fp);
+
   sinfo("sp:%" PRIxREG " ra:%" PRIxREG "\n",
         context->sp, context->ra);
-#endif
-#endif
+
 
   /* Allocate and initialize a TCB for the child task. */
 
@@ -177,7 +161,6 @@ pid_t up_vfork(const struct vfork_s *context)
 
   /* Was there a frame pointer in place before? */
 
-#ifdef CONFIG_RISCV_FRAMEPOINTER
   if (context->fp >= context->sp && context->fp < stacktop)
     {
       uintptr_t frameutil = stacktop - context->fp;
@@ -192,12 +175,6 @@ pid_t up_vfork(const struct vfork_s *context)
         stacktop, context->sp, context->fp);
   sinfo("New stack top:%" PRIxREG " SP:%" PRIxREG " FP:%" PRIxREG "\n",
         newtop, newsp, newfp);
-#else
-  sinfo("Old stack top:%" PRIxREG " SP:%" PRIxREG "\n",
-        stacktop, context->sp);
-  sinfo("New stack top:%" PRIxREG " SP:%" PRIxREG "\n",
-        newtop, newsp);
-#endif
 
   /* Update the stack pointer, frame pointer, global pointer and saved
    * registers.  When the child TCB was initialized, all of the values
@@ -205,7 +182,7 @@ pid_t up_vfork(const struct vfork_s *context)
    * return value in v0 should be cleared to zero, providing the
    * indication to the newly started child thread.
    */
-  assert(0);
+  child->cmn.xcp.regs[REG_S0]   = context->s0;  /* Saved register s0 */
   child->cmn.xcp.regs[REG_S1]   = context->s1;  /* Saved register s1 */
   child->cmn.xcp.regs[REG_S2]   = context->s2;  /* Saved register s2 */
   child->cmn.xcp.regs[REG_S3]   = context->s3;  /* Saved register s3 */
@@ -214,19 +191,12 @@ pid_t up_vfork(const struct vfork_s *context)
   child->cmn.xcp.regs[REG_S6]   = context->s6;  /* Saved register s6 */
   child->cmn.xcp.regs[REG_S7]   = context->s7;  /* Saved register s7 */
   child->cmn.xcp.regs[REG_S8]   = context->s8;  /* Saved register s8 */
-  child->cmn.xcp.regs[REG_S9]   = context->s9;  /* Saved register s9 */
-  // child->cmn.xcp.regs[REG_S10]  = context->s10; /* Saved register s10 */
-  // child->cmn.xcp.regs[REG_S11]  = context->s11; /* Saved register s11 */
-#ifdef CONFIG_RISCV_FRAMEPOINTER
-  child->cmn.xcp.regs[REG_FP]   = newfp;        /* Frame pointer */
-#else
-  child->cmn.xcp.regs[REG_S0]   = context->s0;  /* Saved register s0 */
-#endif
+  child->cmn.xcp.regs[REG_FP]   = newfp;  /* Saved register s9/fp */
+
   child->cmn.xcp.regs[REG_SP]   = newsp;        /* Stack pointer */
-#ifdef RISCV_SAVE_GP
-  child->cmn.xcp.regs[REG_GP]   = newsp;        /* Global pointer */
-#endif
+
 #ifdef CONFIG_ARCH_FPU
+  assert(0);
   child->cmn.xcp.regs[REG_FS0]  = context->fs0;  /* Saved register fs1 */
   child->cmn.xcp.regs[REG_FS1]  = context->fs1;  /* Saved register fs1 */
   child->cmn.xcp.regs[REG_FS2]  = context->fs2;  /* Saved register fs2 */
@@ -242,6 +212,7 @@ pid_t up_vfork(const struct vfork_s *context)
 #endif
 
 #ifdef CONFIG_LIB_SYSCALL
+  assert(0);
   /* If we got here via a syscall, then we are going to have to setup some
    * syscall return information as well.
    */

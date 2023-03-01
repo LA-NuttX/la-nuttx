@@ -209,7 +209,7 @@ static inline uintptr_t sys_call1(unsigned int nbr, uintptr_t parm1)
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }
@@ -236,7 +236,7 @@ static inline uintptr_t sys_call2(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }
@@ -265,7 +265,7 @@ static inline uintptr_t sys_call3(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }
@@ -296,7 +296,7 @@ static inline uintptr_t sys_call4(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }
@@ -328,7 +328,7 @@ static inline uintptr_t sys_call5(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }
@@ -362,7 +362,7 @@ static inline uintptr_t sys_call6(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop" : "=r"(r0));
+  asm volatile("nop");
 
   return r0;
 }

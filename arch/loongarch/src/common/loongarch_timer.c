@@ -21,7 +21,7 @@
 /****************************************************************************
  * Included Files
  ****************************************************************************/
-
+#include <larchintrin.h>
 #include <nuttx/irq.h>
 #include <nuttx/kmalloc.h>
 
@@ -102,10 +102,9 @@ static void loongarch_timer_set_tcfg(struct loongarch_timer_lowerhalf_s *priv,
 #ifdef CONFIG_ARCH_LA64
 
   uint64_t tcfg_init_value = value<<2 | CSR_TCFG_EN;
-  // uint64_t tcfg_init_value = value<<2;//for debugging
+  tcfg_init_value         &= ~CSR_TCFG_PERIOD;
 
-  WRITE_CSR(LOONGARCH_CSR_TCFG, tcfg_init_value);
-    
+  WRITE_CSR64(LOONGARCH_CSR_TCFG, tcfg_init_value);
 #else
     
   assert(0);
@@ -115,7 +114,7 @@ static void loongarch_timer_set_tcfg(struct loongarch_timer_lowerhalf_s *priv,
     
   /* Make sure it sticks */
 #endif
-  __DMB();
+  // __DMB();
 }
 
 /****************************************************************************
@@ -268,7 +267,6 @@ static int loongarch_timer_current(struct oneshot_lowerhalf_s *lower,
   if (time < 0)
   {
     assert(0);
-    // time = 0xffffffffffffffff-(priv->timer_initval - loongarch_timer_get_time());
   }
   uint64_t nsec = time / (priv->freq / USEC_PER_SEC) * NSEC_PER_USEC;
 
@@ -282,13 +280,8 @@ static int loongarch_timer_interrupt(int irq, void *context, void *arg)
 {
   struct loongarch_timer_lowerhalf_s *priv = arg;
 
-  uintptr_t estatval_1 = READ_CSR(LOONGARCH_CSR_ESTAT);
-  // printf("%lu", estatval_1);
-
   /* clear pending timer interrupt */
-  WRITE_CSR(LOONGARCH_CSR_TINTCLR, CSR_TINTCLR_TI);
-  uintptr_t estatval_2 = READ_CSR(LOONGARCH_CSR_ESTAT);
-  // printf("%lu", estatval_2);
+  WRITE_CSR64(LOONGARCH_CSR_TINTCLR, CSR_TINTCLR_TI);
 
   if (priv->callback != NULL)
     {

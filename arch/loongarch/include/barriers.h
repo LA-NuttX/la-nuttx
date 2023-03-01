@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/risc-v/include/barriers.h
+ * arch/loongarch/include/barriers.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,15 +18,15 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_RISCV_INCLUDE_BARRIERS_H
-#define __ARCH_RISCV_INCLUDE_BARRIERS_H
+#ifndef __ARCH_LOONGARCH_INCLUDE_BARRIERS_H
+#define __ARCH_LOONGARCH_INCLUDE_BARRIERS_H
 
 /* Common memory barriers:
  * __DMB() is used to synchronize external devices (I/O domain mainly)
  * __ISB() is used to synchronize the instruction and data streams
  */
 
-#define __DMB()             __asm__ __volatile__ ("dbar 0"   ::: "memory")
-#define __ISB()             __asm__ __volatile__ ("fence.i" ::: "memory")
+#define __DMB()             __asm__ __volatile__ ("dbar 0":::"memory")
+#define __ISB()             __asm__ __volatile__ ("ibar 0")
 
-#endif /* __ARCH_RISCV_INCLUDE_BARRIERS_H */
+#endif /* __ARCH_LOONGARCH_INCLUDE_BARRIERS_H */

@@ -114,7 +114,7 @@ static void loongarch_timer_set_tcfg(struct loongarch_timer_lowerhalf_s *priv,
     
   /* Make sure it sticks */
 #endif
-  // __DMB();
+  __DMB();
 }
 
 /****************************************************************************

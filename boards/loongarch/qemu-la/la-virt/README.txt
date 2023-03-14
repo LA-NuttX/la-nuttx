@@ -11,4 +11,27 @@ $ ../configure --target-list=loongarch64-softmmu --enable-debug
 $ make -j8
 # You could add the ./build/qemu-system-loongarch64 to your PATH
 
-3.
+3.1. Configure and build NuttX for BUILD_FLAT
+
+  $ mkdir ./nuttx; cd ./nuttx
+  $ git clone https://github.com/apache/nuttx.git nuttx
+  $ git clone https://github.com/apache/nuttx-apps.git apps
+  $ cd nuttx
+  $ make distclean
+  $ ./tools/configure.sh -l la-virt:nsh64
+  $ make V=1 -j12
+
+3.2. Configure and build NuttX for BUILD_KERNEL
+
+  $ mkdir ./nuttx; cd ./nuttx
+  $ git clone https://github.com/apache/nuttx.git nuttx
+  $ git clone https://github.com/apache/nuttx-apps.git apps
+  $ cd nuttx
+  $ make distclean
+  $ ./tools/configure.sh -l la-virt:knsh64 && make -j12 && make export V=1
+  $ cd ../apps && ./tools/mkimport.sh -z -x ../nuttx/nuttx-export-*.tar.gz && make import V=1
+  $ cd ../nuttx
+
+4. Run the nuttx with qemu
+
+  $ qemu-system-loongarch64 -machine virt -m 4G -cpu la464 -smp 1 -kernel ./nuttx --nographic

@@ -186,16 +186,12 @@
 #define REG_R31_NDX         31
 
 /* Other CSR holding context information, note: era is at 0 position REG_ERA_NDX */
+#define REG_CSR_CRMD_NDX    32
+#define REG_CSR_PRMD_NDX    33
+#define REG_CSR_ECFG_NDX    34
+#define REG_CSR_EUEN_NDX    35
 
-#define REG_CSR_PRMD_NDX    32
-#define REG_CSR_ECFG_NDX    33
-#define REG_CSR_EUEN_NDX    34
-
-#ifdef CONFIG_ARCH_RISCV_INTXCPT_EXTREGS
-#  define INT_XCPT_REGS     (35 + CONFIG_ARCH_RISCV_INTXCPT_EXTREGS)
-#else
-#  define INT_XCPT_REGS     35
-#endif
+#define INT_XCPT_REGS       36
 
 #ifdef CONFIG_ARCH_LA32
 #  define INT_REG_SIZE      4
@@ -305,6 +301,7 @@
 #  define REG_R29           (INT_REG_SIZE*REG_R29_NDX)
 #  define REG_R30           (INT_REG_SIZE*REG_R30_NDX)
 #  define REG_R31           (INT_REG_SIZE*REG_R31_NDX)
+#  define REG_CSR_CRMD      (INT_REG_SIZE*REG_CSR_CRMD_NDX)
 #  define REG_CSR_PRMD      (INT_REG_SIZE*REG_CSR_PRMD_NDX)
 #  define REG_CSR_ECFG      (INT_REG_SIZE*REG_CSR_ECFG_NDX)
 #  define REG_CSR_EUEN      (INT_REG_SIZE*REG_CSR_EUEN_NDX)
@@ -378,6 +375,7 @@
 #  define REG_R29           REG_R29_NDX
 #  define REG_R30           REG_R30_NDX
 #  define REG_R31           REG_R31_NDX
+#  define REG_CSR_CRMD      REG_CSR_CRMD_NDX
 #  define REG_CSR_PRMD      REG_CSR_PRMD_NDX
 #  define REG_CSR_ECFG      REG_CSR_ECFG_NDX
 #  define REG_CSR_EUEN      REG_CSR_EUEN_NDX
@@ -513,7 +511,7 @@ struct xcpt_syscall_s
 {
   uintptr_t sysreturn;   /* The return PC */
 #ifndef CONFIG_BUILD_FLAT
-  uintptr_t int_ctx;     /* Interrupt context (i.e. m-/sstatus) */
+  uintptr_t prmdval;     /* prmd value (i.e. m-/sstatus) */
 #endif
 };
 #endif
@@ -570,7 +568,7 @@ struct xcptcontext
    */
 
   uintptr_t *ustkptr;  /* Saved user stack pointer */
-  uintptr_t *kstack;   /* Allocate base of the (aligned) kernel stack */
+  uintptr_t *kstack;   /* Allocate base of the (aligned) kernel stack , allocated in up_addrenv_kstackalloc */
   uintptr_t *kstkptr;  /* Saved kernel stack pointer */
 #endif
 #endif

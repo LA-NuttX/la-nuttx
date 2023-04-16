@@ -26,6 +26,8 @@ SECTIONS
     {
       _stext = . ;
       *(.text)
+      . = ALIGN(4K);
+      *(__trap_vec_section)
       *(.text.*)
       *(.gnu.warning)
       *(.stub)

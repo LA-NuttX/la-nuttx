@@ -20,6 +20,7 @@
 
 ifeq ($(CONFIG_BUILD_KERNEL),y)
 STARTUP_OBJS = crt0$(OBJEXT)
+CMN_ASRCS += loongarch_exception_tlb.S
 endif
 
 # Specify our general Assembly files
@@ -52,10 +53,10 @@ CMN_CSRCS += riscv_misaligned.c
 endif
 
 ifneq ($(CONFIG_BUILD_FLAT),y)
-CMN_CSRCS  += riscv_task_start.c
-CMN_CSRCS  += riscv_pthread_start.c
-CMN_CSRCS  += riscv_signal_dispatch.c
-CMN_UASRCS += riscv_signal_handler.S
+CMN_CSRCS  += loongarch_task_start.c
+CMN_CSRCS  += loongarch_pthread_start.c
+CMN_CSRCS  += loongarch_signal_dispatch.c
+CMN_UASRCS += loongarch_signal_handler.S
 endif
 
 ifeq ($(CONFIG_SCHED_BACKTRACE),y)
@@ -94,14 +95,14 @@ CMN_CSRCS += riscv_pmp.c
 endif
 
 ifeq ($(CONFIG_ARCH_USE_MMU),y)
-CMN_CSRCS += riscv_mmu.c
+CMN_CSRCS += loongarch_mmu.c
 endif
 
 ifeq ($(CONFIG_ARCH_KERNEL_STACK),y)
-CMN_CSRCS += riscv_addrenv_kstack.c
+CMN_CSRCS += loongarch_addrenv_kstack.c
 endif
 
 ifeq ($(CONFIG_ARCH_ADDRENV),y)
-CMN_CSRCS += riscv_addrenv.c riscv_pgalloc.c riscv_addrenv_perms.c
-CMN_CSRCS += riscv_addrenv_utils.c riscv_addrenv_shm.c
+CMN_CSRCS += loongarch_addrenv.c loongarch_pgalloc.c loongarch_addrenv_perms.c
+CMN_CSRCS += loongarch_addrenv_utils.c loongarch_addrenv_shm.c
 endif

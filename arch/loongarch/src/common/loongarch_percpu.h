@@ -47,9 +47,9 @@
  * 2: REGLOAD a0, RISCV_PERCPU_HARTID(a0)
  */
 
-#define RISCV_PERCPU_LIST       (0 * INT_REG_SIZE)
-#define RISCV_PERCPU_HARTID     (1 * INT_REG_SIZE)
-#define RISCV_PERCPU_IRQSTACK   (2 * INT_REG_SIZE)
+#define RISCV_PERCPU_LIST           (0 * INT_REG_SIZE)
+#define RISCV_PERCPU_HARTID         (1 * INT_REG_SIZE)
+#define LOONGARCH_PERCPU_IRQSTACK   (2 * INT_REG_SIZE)
 
 #ifndef __ASSEMBLY__
 
@@ -59,25 +59,25 @@
 
 /* Per CPU save area. Access to this structure can be gained via the scratch
  * ([m/s]scratch) register. Prior to this, every CPU that
- * wishes to access this information must call riscv_percpu_add_hart() which
+ * wishes to access this information must call loongarch_percpu_add_hart() which
  * will set up [m/s]scratch to point to the CPUs own area
  */
 
-struct riscv_percpu_s
+struct loongarch_percpu_s
 {
-  struct riscv_percpu_s *next;      /* For sl list linkage */
+  struct loongarch_percpu_s *next;      /* For sl list linkage */
   uintptr_t              hartid;    /* Hart ID */
   uintptr_t              irq_stack; /* Interrupt stack */
 };
 
-typedef struct riscv_percpu_s riscv_percpu_t;
+typedef struct loongarch_percpu_s loongarch_percpu_t;
 
 /****************************************************************************
  * Public Function Prototypes
  ****************************************************************************/
 
 /****************************************************************************
- * Name: riscv_percpu_add_hart
+ * Name: loongarch_percpu_add_hart
  *
  * Description:
  *   Get add a hart to the per CPU area
@@ -87,7 +87,7 @@ typedef struct riscv_percpu_s riscv_percpu_t;
  *
  ****************************************************************************/
 
-void riscv_percpu_add_hart(uintptr_t hartid);
+void loongarch_percpu_add_hart(uintptr_t hartid);
 
 /****************************************************************************
  * Name: riscv_percpu_get_hartid

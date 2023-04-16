@@ -22,7 +22,7 @@
  * Included Files
  ****************************************************************************/
 
-  .section .text
+  .section __trap_vec_section
   .balign  8
   .global  __trap_vec
 

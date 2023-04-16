@@ -109,30 +109,29 @@ static void riscv_registerdump(const uintptr_t *regs)
  ****************************************************************************/
 
 #ifdef CONFIG_LIB_SYSCALL
-static void dispatch_syscall(void) naked_function;
-static void dispatch_syscall(void)
+static inline void dispatch_syscall(void)
 {
   asm volatile
     (
-     "addi sp, sp, -" STACK_FRAME_SIZE "\n" /* Create a stack frame to hold ra */
-     REGSTORE " ra, 0(sp)\n"                /* Save ra in the stack frame */
-     "la   t0, g_stublookup\n"              /* t0=The base of the stub lookup table */
-#ifdef CONFIG_ARCH_RV32
-     "slli a0, a0, 2\n"                     /* a0=Offset for the stub lookup table */
+     "addi.d $sp, $sp, -" STACK_FRAME_SIZE "\n"     /* Create a stack frame to hold ra */
+     REGSTORE " $ra, $sp, 0\n"                      /* Save ra in the stack frame */
+     "la.abs   $t0, g_stublookup\n"                 /* t0=The base of the stub lookup table */
+#ifdef CONFIG_ARCH_LA32
+     "slli.d  $a0, $a0, 2\n"                        /* a0=Offset for the stub lookup table */
 #else
-     "slli a0, a0, 3\n"                     /* a0=Offset for the stub lookup table */
+     "slli.d  $a0, $a0, 3\n"                        /* a0=Offset for the stub lookup table */
 #endif
-     "add  t0, t0, a0\n"                    /* t0=The address in the table */
-     REGLOAD " t0, 0(t0)\n"                 /* t0=The address of the stub for this syscall */
-     "jalr ra, t0\n"                        /* Call the stub (modifies ra) */
-     REGLOAD " ra, 0(sp)\n"                 /* Restore ra */
-     "addi sp, sp, " STACK_FRAME_SIZE "\n"  /* Destroy the stack frame */
-     "mv   a2, a0\n"                        /* a2=Save return value in a0 */
-     "li   a0, 3\n"                         /* a0=SYS_syscall_return (3) */
-#ifdef CONFIG_ARCH_USE_S_MODE
-     "j    sys_call2"                       /* Return from the syscall */
+     "add.d  $t0, $t0, $a0\n"                       /* t0=The address in the table */
+     REGLOAD " $t0, $t0, 0\n"                       /* t0=The address of the stub for this syscall */
+     "jirl   $ra, $t0, 0\n"                         /* Call the stub (modifies ra) */
+     REGLOAD " $ra, $sp, 0\n"                       /* Restore ra */
+     "addi.d  $sp, $sp, " STACK_FRAME_SIZE "\n"     /* Destroy the stack frame */
+     "move   $a2, $a0\n"                            /* a2=Save return value in a0 */
+     "li.d   $a0, 3\n"                              /* a0=SYS_syscall_return (3) */
+#ifdef CONFIG_BUILD_KERNEL
+     "b    sys_call2"                               /* Return from the syscall */
 #else
-     "ecall"                                /* Return from the syscall */
+     "syscall 0"                                    /* Return from the syscall */
 #endif
   );
 }
@@ -267,7 +266,7 @@ int loongarch_swint(int irq, void *context, void *arg)
 
           regs[REG_EPC]         = rtcb->xcp.syscall[index].sysreturn;
 #ifndef CONFIG_BUILD_FLAT
-          regs[REG_INT_CTX]     = rtcb->xcp.syscall[index].int_ctx;
+          regs[REG_CSR_PRMD]     = rtcb->xcp.syscall[index].prmdval;
 #endif
 
           /* The return value must be in A0-A1.
@@ -337,7 +336,7 @@ int loongarch_swint(int irq, void *context, void *arg)
           regs[REG_A0]       = regs[REG_A2]; /* argc */
           regs[REG_A1]       = regs[REG_A3]; /* argv */
 #endif
-          regs[REG_INT_CTX] &= ~STATUS_PPP; /* User mode */
+          regs[REG_CSR_PRMD] |= PLV_USER;
         }
         break;
 #endif
@@ -369,7 +368,8 @@ int loongarch_swint(int irq, void *context, void *arg)
 
           regs[REG_A0]       = regs[REG_A2];  /* pthread entry */
           regs[REG_A1]       = regs[REG_A3];  /* arg */
-          regs[REG_INT_CTX] &= ~STATUS_PPP;   /* User mode */
+          assert(0);
+          // regs[REG_INT_CTX] &= ~STATUS_PPP;   /* User mode */
         }
         break;
 #endif
@@ -408,7 +408,8 @@ int loongarch_swint(int irq, void *context, void *arg)
           regs[REG_EPC]        =
               (uintptr_t)ARCH_DATA_RESERVE->ar_sigtramp;
 #endif
-          regs[REG_INT_CTX]   &= ~STATUS_PPP; /* User mode */
+          assert(0);
+          // regs[REG_INT_CTX]   &= ~STATUS_PPP; /* User mode */
 
           /* Change the parameter ordering to match the expectation of struct
            * userpace_s signal_handler.
@@ -458,7 +459,8 @@ int loongarch_swint(int irq, void *context, void *arg)
 
           DEBUGASSERT(rtcb->xcp.sigreturn != 0);
           regs[REG_EPC]        = rtcb->xcp.sigreturn;
-          regs[REG_INT_CTX]   |= STATUS_PPP; /* Privileged mode */
+          assert(0);
+          // regs[REG_INT_CTX]   |= STATUS_PPP; /* Privileged mode */
 
           rtcb->xcp.sigreturn  = 0;
 
@@ -506,7 +508,7 @@ int loongarch_swint(int irq, void *context, void *arg)
 
           rtcb->xcp.syscall[index].sysreturn  = regs[REG_EPC];
 #ifndef CONFIG_BUILD_FLAT
-          rtcb->xcp.syscall[index].int_ctx    = regs[REG_INT_CTX];
+          rtcb->xcp.syscall[index].prmdval    = regs[REG_CSR_PRMD];
 #endif
 
           rtcb->xcp.nsyscalls  = index + 1;
@@ -514,7 +516,7 @@ int loongarch_swint(int irq, void *context, void *arg)
           regs[REG_EPC]        = (uintptr_t)dispatch_syscall;
 
 #ifndef CONFIG_BUILD_FLAT
-          regs[REG_INT_CTX]   |= STATUS_PPP; /* Privileged mode */
+          regs[REG_CSR_PRMD]   &= PLV_KERN<<CSR_PRMD_PPLV_SHIFT; /* Privileged mode */
 #endif
 
           /* Offset A0 to account for the reserved values */

@@ -226,8 +226,8 @@ pid_t up_vfork(const struct vfork_s *context)
             parent->xcp.syscall[index].sysreturn;
 
 #ifndef CONFIG_BUILD_FLAT
-          child->cmn.xcp.syscall[index].int_ctx =
-            parent->xcp.syscall[index].int_ctx;
+          child->cmn.xcp.syscall[index].prmdval =
+            parent->xcp.syscall[index].prmdval;
 #endif
         }
 

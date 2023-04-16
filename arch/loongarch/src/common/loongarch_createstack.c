@@ -164,7 +164,7 @@ int up_create_stack(struct tcb_s *tcb, size_t stack_size, uint8_t ttype)
       uintptr_t top_of_stack;
       size_t size_of_stack;
 
-      /* RISC-V uses a push-down stack: the stack grows toward lower
+      /* LoongArch uses a push-down stack: the stack grows toward lower
        * addresses in memory. The stack pointer register points to the
        * lowest, valid working address (the "top" of the stack). Items on
        * the stack are referenced as positive word offsets from SP.
@@ -172,7 +172,7 @@ int up_create_stack(struct tcb_s *tcb, size_t stack_size, uint8_t ttype)
 
       top_of_stack = (uintptr_t)tcb->stack_alloc_ptr + stack_size;
 
-      /* The RISC-V stack must be aligned at 128-bit (16-byte) boundaries.
+      /* The LoongArch stack must be aligned at 128-bit (16-byte) boundaries.
        * If necessary top_of_stack must be rounded down to the next boundary.
        */
 

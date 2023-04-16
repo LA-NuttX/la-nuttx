@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/risc-v/include/arch.h
+ * arch/loongarch/include/arch.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -22,8 +22,8 @@
  * only indirectly through nuttx/arch.h
  */
 
-#ifndef __ARCH_RISCV_INCLUDE_ARCH_H
-#define __ARCH_RISCV_INCLUDE_ARCH_H
+#ifndef __ARCH_LOONGARCH_INCLUDE_ARCH_H
+#define __ARCH_LOONGARCH_INCLUDE_ARCH_H
 
 /****************************************************************************
  * Included Files
@@ -42,7 +42,7 @@
 
 /* Provide the maximum amount of page table levels per MMU type */
 
-#ifdef CONFIG_ARCH_MMU_TYPE_SV39
+#ifdef CONFIG_ARCH_MMU_TYPE_16KB
 #  define ARCH_PGT_MAX_LEVELS (3)
 #endif
 
@@ -66,12 +66,13 @@
  * kept in memory always, while the level N tables are dynamically allocated.
  *
  * The implications ? They depend on the MMU type.
- *
- * For Sv39 this means that:
- * - A task can not have more than 1GB of memory allocated. This should be
+ * 
+ * For Loongarch64 this means that:
+ * 
+ * - A task can not have more than 512GB of memory allocated. This should be
  *   plenty enough...
- * - The minimum amount of memory needed for page tables per task is 12K,
- *   which gives access to 2MB of memory. This is plenty for many tasks.
+ * - The minimum amount of memory needed for page tables per task is 48K,
+ *   which gives access to 32MB of memory. This is plenty for many tasks.
  */
 
 struct group_addrenv_s
@@ -95,14 +96,15 @@ struct group_addrenv_s
   uintptr_t heapvbase;
   size_t    heapsize;
 
-  /* For convenience store the satp value here */
+  /* For convenience store the pgdh, pghl, crmd.pg, crmd.da value here */
 
-  uintptr_t satp;
+  uintptr_t pgdh;
+  uintptr_t pgdl;
 };
 
 typedef struct group_addrenv_s group_addrenv_t;
 
-/* If an address environment needs to be saved, saving the satp register
+/* If an address environment needs to be saved, saving the PWDH & PWDL registers
  * will suffice. The register width is architecture dependent
  */
 
@@ -127,4 +129,4 @@ extern "C"
 }
 #endif
 
-#endif /* __ARCH_RISCV_INCLUDE_ARCH_H */
+#endif /* __ARCH_LOONGARCH_INCLUDE_ARCH_H */

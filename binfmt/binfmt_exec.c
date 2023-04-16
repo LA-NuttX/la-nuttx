@@ -79,7 +79,7 @@ int exec_spawn(FAR const char *filename, FAR char * const *argv,
   int ret;
 
   /* Allocate the load information */
-
+  binfo("sizeof(binary_s): %lx\n", sizeof(struct binary_s));
   bin = (FAR struct binary_s *)kmm_zalloc(sizeof(struct binary_s));
   if (!bin)
     {

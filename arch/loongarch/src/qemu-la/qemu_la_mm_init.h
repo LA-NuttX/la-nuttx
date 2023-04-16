@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/risc-v/src/qemu-rv/qemu_rv_mm_init.h
+ * arch/loongarch/src/qemu-la/qemu_la_mm_init.h
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -18,8 +18,8 @@
  *
  ****************************************************************************/
 
-#ifndef __ARCH_RISC_V_SRC_QEMURV_QEMURV_MM_INIT_H
-#define __ARCH_RISC_V_SRC_QEMURV_QEMURV_MM_INIT_H
+#ifndef __ARCH_LOONGARCH_SRC_QEMULA_QEMULA_MM_INIT_H
+#define __ARCH_LOONGARCH_SRC_QEMULA_QEMULA_MM_INIT_H
 
 /****************************************************************************
  * Included Files
@@ -27,14 +27,14 @@
 
 #include <nuttx/config.h>
 
-#include "riscv_mmu.h"
+#include "loongarch_mmu.h"
 
 /****************************************************************************
  * Public Functions Prototypes
  ****************************************************************************/
 
 /****************************************************************************
- * Name: qemu_rv_kernel_mappings
+ * Name: qemu_la_kernel_mappings
  *
  * Description:
  *  Setup kernel mappings when using CONFIG_BUILD_KERNEL. Sets up the kernel
@@ -42,10 +42,10 @@
  *
  ****************************************************************************/
 
-void qemu_rv_kernel_mappings(void);
+void qemu_la_kernel_mappings(void);
 
 /****************************************************************************
- * Name: qemu_rv_mm_init
+ * Name: qemu_la_mm_init
  *
  * Description:
  *  Setup kernel mappings when using CONFIG_BUILD_KERNEL. Sets up kernel MMU
@@ -53,6 +53,6 @@ void qemu_rv_kernel_mappings(void);
  *
  ****************************************************************************/
 
-void qemu_rv_mm_init(void);
+void qemu_la_mm_init(void);
 
-#endif /* __ARCH_RISC_V_SRC_QEMURV_QEMURV_MM_INIT_H */
+#endif /* __ARCH_LOONGARCH_SRC_QEMULA_QEMULA_MM_INIT_H */

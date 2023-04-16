@@ -32,8 +32,8 @@ endif
 
 ARCHSCRIPT += $(BOARD_DIR)$(DELIM)scripts$(DELIM)$(LDSCRIPT)
 
-ARCHCPUFLAGS += -mcmodel=normal
-ARCHPICFLAGS = -fpic -msingle-pic-base
+ARCHCPUFLAGS += -mcmodel=normal -Wa,-mla-global-with-pcrel
+ARCHPICFLAGS = 
 
 CFLAGS := $(ARCHCFLAGS) $(ARCHOPTIMIZATION) $(ARCHCPUFLAGS) $(ARCHINCLUDES) $(ARCHDEFINES) $(EXTRAFLAGS) -pipe
 CPICFLAGS = $(ARCHPICFLAGS) $(CFLAGS)

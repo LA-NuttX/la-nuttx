@@ -78,7 +78,7 @@ static const struct oneshot_operations_s g_loongarch_timer_ops =
  * Private Functions
  ****************************************************************************/
 
-static uint64_t loongarch_timer_get_time()
+static uint64_t loongarch_timer_get_time(void)
 {
 #ifdef CONFIG_ARCH_LA64
 
@@ -214,8 +214,6 @@ static int loongarch_timer_cancel(struct oneshot_lowerhalf_s *lower,
   struct loongarch_timer_lowerhalf_s *priv =
     (struct loongarch_timer_lowerhalf_s *)lower;
   uint64_t mtime;
-
-  // riscv_mtimer_set_mtimecmp(priv, UINT64_MAX);
 
   mtime = loongarch_timer_get_time();
   if (priv->alarm > mtime)

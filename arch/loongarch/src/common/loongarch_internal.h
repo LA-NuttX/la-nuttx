@@ -150,43 +150,19 @@ static inline void iocsr_write64(unsigned long val, unsigned int reg)
 	__iocsrwr_d(val, reg);
 }
 
+#define READ_CSR32(reg) __csrrd(reg)
 
-// #define READ_CSR(reg) 
-//   ({ 
-//      uintptr_t reg##_val; 
-//      __asm__ __volatile__("csrrd %0, " __STR(reg) : "=r"(reg##_val)::"memory"); 
-//      reg##_val; 
-//   })
-#define READ_CSR(reg) __csrrd(reg)
+#define READ_CSR64(reg) __dcsrrd(reg)
 
-// #define READ_AND_SET_CSR(reg, bits) 
-//   ({ 
-//      uintptr_t reg##_val=bits; 
-//      __asm__ __volatile__("csrxchg %0, %0, " __STR(reg): "+r"(reg##_val)::"memory"); 
-//      reg##_val; 
-//   })
-#define READ_AND_SET_CSR(reg, bits) __csrxchg(bits, bits, reg)
+#define READ_AND_SET_CSR(reg, bits) __dcsrxchg(bits, bits, reg)
 
-// #define WRITE_CSR(reg, val) 
-//   ({ 
-//      __asm__ __volatile__("csrwr %0, " __STR(reg):: "r"(val):"memory"); 
-//   })
 #define WRITE_CSR64(reg, val) __dcsrwr(val, reg)
 
 #define WRITE_CSR32(reg, val) __csrwr(val, reg)
 
-// #define SET_CSR(reg, bits) 
-//   ({ 
-//     uintptr_t reg##_val=bits; 
-//      __asm__ __volatile__("csrxchg %0, %0, " __STR(reg) :"+r"(reg##_val)::"memory"); 
-//   })
-#define SET_CSR(reg, bits) __csrxchg(bits, bits, reg)
+#define SET_CSR(reg, bits) __dcsrxchg(bits, bits, reg)
 
-// #define CLEAR_CSR(reg, bits) 
-//   ({ 
-//      __dcsrxchg(bits, bits, __STR(reg));
-//   })
-#define CLEAR_CSR(reg, bits) __csrxchg(0, bits, reg)
+#define CLEAR_CSR(reg, bits) __dcsrxchg(0, bits, reg)
 
 #endif
 
@@ -211,6 +187,7 @@ extern "C"
 /* Atomic modification of registers */
 
 void modifyreg32(uintptr_t addr, uint32_t clearbits, uint32_t setbits);
+void modifyreg64(uintptr_t addr, uint64_t clearbits, uint64_t setbits);
 
 /* Memory allocation ********************************************************/
 
@@ -326,8 +303,8 @@ uintptr_t riscv_mhartid(void);
 
 /* If kernel runs in Supervisor mode, a system call trampoline is needed */
 
-#ifdef CONFIG_ARCH_USE_S_MODE
-void *riscv_perform_syscall(uintptr_t *regs);
+#ifdef CONFIG_BUILD_KERNEL
+void *loongarch_perform_syscall(uintptr_t *regs);
 #endif
 
 /* Context switching via system calls ***************************************/

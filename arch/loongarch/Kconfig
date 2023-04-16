@@ -29,7 +29,7 @@ config ARCH_CHIP_QEMU_LA
 	select ARCH_HAVE_MULTICPU
 	select ARCH_HAVE_MPU
 	select ARCH_HAVE_MMU
-	select ARCH_MMU_TYPE_32MB if ARCH_CHIP_QEMU_LA64
+	select ARCH_MMU_TYPE_16KB if ARCH_CHIP_QEMU_LA64
 	select ARCH_HAVE_ADDRENV
 	select ARCH_NEED_ADDRENV_MAPPING
 	select ONESHOT
@@ -83,6 +83,14 @@ config ARCH_CHIP
 config ARCH_MMU_TYPE_32MB
 	bool
 	default n
+
+config ARCH_MMU_TYPE_16KB
+	bool
+	default n
+
+config LOONGARCH_RELA_STACK_DEPTH
+	int
+	default 16
 
 # config ARCH_HAVE_PLV0_MODE
 # 	bool

@@ -104,8 +104,8 @@ ifeq ($(CONFIG_DEBUG_LINK_MAP),y)
 endif
 
 ifeq ($(CONFIG_DEBUG_SYMBOLS),y)
-#  ARCHOPTIMIZATION += -g -ggdb
-  ARCHOPTIMIZATION += -g
+  ARCHOPTIMIZATION += -g -ggdb
+#  ARCHOPTIMIZATION += -g
 endif
 
 # Generic GNU LA toolchain

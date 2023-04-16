@@ -71,7 +71,7 @@ uintptr_t loongarch_get_newprmd(void)
 // #endif
   // );
   assert(0);
-  uintptr_t prmd = READ_CSR(LOONGARCH_CSR_PRMD);
+  uintptr_t prmd = READ_CSR64(LOONGARCH_CSR_PRMD);
 
   return (prmd | CSR_PRMD_PIE | 0x00);
 

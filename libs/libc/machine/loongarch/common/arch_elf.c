@@ -70,21 +70,21 @@ struct rname_code_s
 
 static struct rname_code_s _rname_table[] =
 {
-  {"RELAX", R_RISCV_RELAX},
-  {"RISCV_32", R_RISCV_32},
-  {"RISCV_64", R_RISCV_64},
-  {"PCREL_LO12_I", R_RISCV_PCREL_LO12_I},
-  {"PCREL_LO12_S", R_RISCV_PCREL_LO12_S},
-  {"PCREL_HI20", R_RISCV_PCREL_HI20},
-  {"HI20", R_RISCV_HI20},
-  {"LO12_I", R_RISCV_LO12_I},
-  {"LO12_S", R_RISCV_LO12_S},
-  {"CALL", R_RISCV_CALL},
-  {"CALL_PLT", R_RISCV_CALL_PLT},
-  {"BRANCH", R_RISCV_BRANCH},
-  {"JAL", R_RISCV_JAL},
-  {"RVC_JUMP", R_RISCV_RVC_JUMP},
-  {"RVC_BRANCH", R_RISCV_RVC_BRANCH},
+  {"R_LARCH_32", R_LARCH_32},
+  {"R_LARCH_64", R_LARCH_64},
+  {"SOP_PUSH_PCREL", R_LARCH_SOP_PUSH_PCREL},
+  {"SOP_PUSH_ABSOLUTE", R_LARCH_SOP_PUSH_ABSOLUTE},
+  {"SOP_PUSH_GPREL", R_LARCH_SOP_PUSH_GPREL},
+  {"SOP_PUSH_PLT_PCREL", R_LARCH_SOP_PUSH_PLT_PCREL},
+  {"SOP_SUB", R_LARCH_SOP_SUB},
+  {"SOP_SL", R_LARCH_SOP_SL},
+  {"SOP_SR", R_LARCH_SOP_SR},
+  {"SOP_ADD", R_LARCH_SOP_ADD},
+  {"SOP_POP_32_S_10_12", R_LARCH_SOP_POP_32_S_10_12},
+  {"SOP_POP_32_S_10_16_S2", R_LARCH_SOP_POP_32_S_10_16_S2},
+  {"SOP_POP_32_S_5_20", R_LARCH_SOP_POP_32_S_5_20},
+  {"SOP_POP_32_S_0_5_10_16_S2", R_LARCH_SOP_POP_32_S_0_5_10_16_S2},
+  {"SOP_POP_32_S_0_10_10_16_S2", R_LARCH_SOP_POP_32_S_0_10_10_16_S2},
 };
 
 /****************************************************************************
@@ -134,11 +134,11 @@ static void _set_val(uint16_t *addr, uint32_t val)
   asm volatile ("dbar 0");
 }
 
-static void _add_val(uint16_t *addr, uint32_t val)
-{
-  uint32_t cur = _get_val(addr);
-  _set_val(addr, cur + val);
-}
+// static void _add_val(uint16_t *addr, uint32_t val)
+// {
+//   uint32_t cur = _get_val(addr);
+//   _set_val(addr, cur + val);
+// }
 
 /****************************************************************************
  * Name: _calc_imm
@@ -156,32 +156,84 @@ static void _add_val(uint16_t *addr, uint32_t val)
  *
  ****************************************************************************/
 
-static void _calc_imm(long offset, long *imm_hi, long *imm_lo)
+// static void _calc_imm(long offset, long *imm_hi, long *imm_lo)
+// {
+//   long lo;
+//   long hi = offset / 4096;
+//   long r  = offset % 4096;
+
+//   if (2047 < r)
+//     {
+//       hi++;
+//     }
+//   else if (r < -2048)
+//     {
+//       hi--;
+//     }
+
+//   lo = offset - (hi * 4096);
+
+//   binfo("offset=%ld: hi=%ld lo=%ld\n",
+//         offset, hi, lo);
+
+//   ASSERT(-2048 <= lo && lo <= 2047);
+
+//   *imm_lo = lo;
+//   *imm_hi = hi;
+// }
+
+/****************************************************************************
+ * Name: rela_stack_push
+ *
+ * Description:
+ *   Push a value into rela_stack, which is used for LoongArch relocation
+ *
+ * Input Parameters:
+ *   stack_value - The value to be pushed
+ *   rela_stack - The stack
+ *   rela_stack_top - Pointing to the top of the rela_stack
+ *
+ * Returned Value:
+ *   0 on success, other values for failure
+ *
+ ****************************************************************************/
+
+static int rela_stack_push(int64_t stack_value, int64_t *rela_stack, size_t *rela_stack_top)
 {
-  long lo;
-  long hi = offset / 4096;
-  long r  = offset % 4096;
+	if (*rela_stack_top >= CONFIG_LOONGARCH_RELA_STACK_DEPTH)
+		return -ENOEXEC;
 
-  if (2047 < r)
-    {
-      hi++;
-    }
-  else if (r < -2048)
-    {
-      hi--;
-    }
+	rela_stack[(*rela_stack_top)++] = stack_value;
+	binfo("%s stack_value = 0x%llx\n", __func__, stack_value);
 
-  lo = offset - (hi * 4096);
-
-  binfo("offset=%ld: hi=%ld lo=%ld\n",
-        offset, hi, lo);
-
-  ASSERT(-2048 <= lo && lo <= 2047);
-
-  *imm_lo = lo;
-  *imm_hi = hi;
+	return 0;
 }
 
+/****************************************************************************
+ * Name: rela_stack_pop
+ *
+ * Description:
+ *   Pop a value from rela_stack, which is used for LoongArch relocation
+ *
+ * Input Parameters:
+ *   stack_value - The value poped from rela_stack_pop
+ *   rela_stack - The stack
+ *   rela_stack_top - Pointing to the top of the rela_stack
+ *
+ * Returned Value:
+ *   0 on success, other values for failure
+ *
+ ****************************************************************************/
+static int rela_stack_pop(int64_t *stack_value, int64_t *rela_stack, size_t *rela_stack_top)
+{
+	if (*rela_stack_top == 0)
+		return -ENOEXEC;
+
+	*stack_value = rela_stack[--(*rela_stack_top)];
+	binfo("%s stack_value = 0x%llx\n", __func__, *stack_value);
+
+	return 0;
+}
 /****************************************************************************
  * Public Functions
  ****************************************************************************/
@@ -204,11 +256,11 @@ static void _calc_imm(long offset, long *imm_hi, long *imm_lo)
 
 bool up_checkarch(const Elf_Ehdr *ehdr)
 {
-  /* Make sure it's an RISCV executable */
+  /* Make sure it's an LoongArch executable */
 
-  if (ehdr->e_machine != EM_RISCV)
+  if (ehdr->e_machine != EM_LOONGARCH)
     {
-      berr("ERROR: Not for RISCV: e_machine=%04x\n", ehdr->e_machine);
+      berr("ERROR: Not for EM_LOONGARCH: e_machine=%04x\n", ehdr->e_machine);
       return false;
     }
 
@@ -277,289 +329,333 @@ int up_relocate(const Elf_Rel *rel, const Elf_Sym *sym, uintptr_t addr)
 }
 
 int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
-                   uintptr_t addr)
+                   uintptr_t addr, int64_t *rela_stack, size_t *rela_stack_top)
 {
-  long offset;
   unsigned int relotype;
 
   /* All relocations depend upon having valid symbol information */
 
   relotype = ARCH_ELF_RELTYPE(rel->r_info);
+  binfo("relocation type:%u\n", relotype);
 
-  if (relotype == R_RISCV_RELAX)
-    {
-      /* NOTE: RELAX has no symbol, so just return */
-
-      binfo("%s at %08" PRIxPTR " [%08" PRIx32 "]\n",
-            _get_rname(relotype),
-            addr, _get_val((uint16_t *)addr));
-
-      return OK;
-    }
-
-  if (sym == NULL && relotype != R_RISCV_NONE)
-    {
-      return -EINVAL;
-    }
+  // if (sym == NULL && relotype != R_LARCH_NONE)
+  //   {
+  //     sym->st_value = 0;
+  //   }
 
   /* Do relocation based on relocation type */
 
   switch (relotype)
     {
-      case R_RISCV_32:
-      case R_RISCV_64:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
+      case R_LARCH_32:
+      case R_LARCH_64:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=%08lx\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              sym, sym->st_value);
+        _set_val((uint16_t *)addr, (uint32_t)(sym->st_value + rel->r_addend));
+      }
+      break;
 
-          _set_val((uint16_t *)addr,
-                   (uint32_t)(sym->st_value + rel->r_addend));
+      case R_LARCH_SOP_PUSH_PCREL:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=%08lx\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              sym, sym->st_value);
+
+        rela_stack_push((long)sym->st_value + (long)rel->r_addend - (long)addr, rela_stack, rela_stack_top);
+      }
+      break;
+      case R_LARCH_SOP_PUSH_ABSOLUTE:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        
+        rela_stack_push(0 + (long)rel->r_addend, rela_stack, rela_stack_top);
+      }
+      break;
+
+      case R_LARCH_SOP_PUSH_GPREL:
+      break;
+
+      case R_LARCH_SOP_PUSH_PLT_PCREL:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=%08lx\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              sym, sym->st_value);
+
+        rela_stack_push((long)sym->st_value + (long)rel->r_addend - (long)addr, rela_stack, rela_stack_top);
+      }
+      break;
+
+      case R_LARCH_SOP_SUB:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+
+        int err = 0;
+        int64_t opr1, opr2;
+
+        err = rela_stack_pop(&opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_push(opr1 - opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+      }
+      break;
+
+      case R_LARCH_SOP_SL:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+
+        int err = 0;
+        int64_t opr1, opr2;
+
+        err = rela_stack_pop(&opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_push(opr1 << opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+      }
+      break;
+
+      case R_LARCH_SOP_SR:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        int err = 0;
+        int64_t opr1, opr2;
+
+        err = rela_stack_pop(&opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_push(opr1 >> opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+      }
+      break;
+
+      case R_LARCH_SOP_ADD:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        int err = 0;
+        int64_t opr1, opr2;
+
+        err = rela_stack_pop(&opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        err = rela_stack_push(opr1 + opr2, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+      }
+      break;
+
+      case R_LARCH_SOP_POP_32_S_10_12:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+
+        int err = 0;
+        int64_t opr1;
+
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+        
+        	/* check 12-bit signed */
+        if ((opr1 & ~(uint64_t)0x7ff) &&
+            (opr1 & ~(uint64_t)0x7ff) != ~(uint64_t)0x7ff) {
+          berr("opr1 = 0x%llx overflow! dangerous %s relocation\n", opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_PCREL_LO12_I:
-      case R_RISCV_PCREL_LO12_S:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
+        /* (*(uint32_t *) PC) [21 ... 10] = opr [11 ... 0] */
+        *(uint32_t *)addr = (*(uint32_t *)addr & (~(uint32_t)0x3ffc00)) | ((opr1 & 0xfff) << 10);
+      }
+      break;
 
-          /* NOTE: imm value for mv has been adjusted in previous HI20 */
+      case R_LARCH_SOP_POP_32_S_10_16_S2:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        
+        int err = 0;
+        int64_t opr1;
+
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
+
+        /* check 4-aligned */
+        if (opr1 % 4) {
+          berr("opr1 = 0x%llx unaligned! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_PCREL_HI20:
-      case R_RISCV_CALL:
-      case R_RISCV_CALL_PLT:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
-
-          offset = (long)sym->st_value + (long)rel->r_addend - (long)addr;
-
-          long imm_hi;
-          long imm_lo;
-
-          _calc_imm(offset, &imm_hi, &imm_lo);
-
-          /* Adjust auipc (add upper immediate to pc) : 20bit */
-
-          _add_val((uint16_t *)addr, (imm_hi << 12));
-
-          if ((_get_val((uint16_t *)(addr + 4)) & 0x7f) == OPCODE_SW)
-            {
-              /* Adjust imm for SW : S-type */
-
-              uint32_t val =
-                (((int32_t)imm_lo >> 5) << 25) +
-                (((int32_t)imm_lo & 0x1f) << 7);
-
-              binfo("imm_lo=%ld (%lx), val=%" PRIx32 "\n",
-                    imm_lo, imm_lo, val);
-
-              _add_val((uint16_t *)(addr + 4), val);
-            }
-          else
-            {
-              /* Adjust imm for MV(ADDI)/JALR : I-type */
-
-              _add_val((uint16_t *)(addr + 4), ((int32_t)imm_lo << 20));
-            }
+        opr1 >>= 2;
+        /* check 18-bit signed */
+        if ((opr1 & ~(uint64_t)0x7fff) &&
+            (opr1 & ~(uint64_t)0x7fff) != ~(uint64_t)0x7fff) {
+          berr("opr1 = 0x%llx overflow! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_BRANCH:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
+        /* (*(uint32_t *) PC) [25 ... 10] = opr [17 ... 2] */
+        *(uint32_t *)addr = (*(uint32_t *)addr & 0xfc0003ff) | ((opr1 & 0xffff) << 10);
 
-          /* P.23 Conditinal Branches : B type (imm=12bit) */
+      }
+      break;
 
-          offset = (long)sym->st_value + (long)rel->r_addend - (long)addr;
-          uint32_t val = _get_val((uint16_t *)addr) & 0xfe000f80;
+      case R_LARCH_SOP_POP_32_S_5_20:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        int err = 0;
+        int64_t opr1;
 
-          /* NOTE: we assume that a compiler adds an immediate value */
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
 
-          ASSERT(offset && val);
-
-          binfo("offset for Bx=%ld (0x%lx) (val=0x%08" PRIx32 ") "
-                "already set!\n",
-                offset, offset, val);
+        /* check 20-bit signed */
+        if ((opr1 & ~(uint64_t)0x7ffff) &&
+            (opr1 & ~(uint64_t)0x7ffff) != ~(uint64_t)0x7ffff) {
+          berr("opr1 = 0x%llx overflow! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_JAL:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
+        /* (*(uint32_t *) PC) [24 ... 5] = opr [19 ... 0] */
+        *(uint32_t *)addr = (*(uint32_t *)addr & (~(uint32_t)0x1ffffe0)) | ((opr1 & 0xfffff) << 5);
+      }
+      break;
 
-          /* P.21 Unconditinal Jumps : UJ type (imm=20bit) */
+      case R_LARCH_SOP_POP_32_S_0_5_10_16_S2:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
+        int err = 0;
+        int64_t opr1;
 
-          offset = (long)sym->st_value + (long)rel->r_addend - (long)addr;
-          uint32_t val = _get_val((uint16_t *)addr) & 0xfffff000;
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
 
-          ASSERT(offset && val);
-
-          /* NOTE: we assume that a compiler adds an immediate value */
-
-          binfo("offset for JAL=%ld (0x%lx) (val=0x%08" PRIx32 ") "
-                "already set!\n",
-                offset, offset, val);
+        /* check 4-aligned */
+        if (opr1 % 4) {
+          berr("opr1 = 0x%llx unaligned! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_HI20:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
-
-          /* P.19 LUI */
-
-          offset = (long)sym->st_value + (long)rel->r_addend;
-          uint32_t insn = _get_val((uint16_t *)addr);
-
-          ASSERT(OPCODE_LUI == (insn & RVI_OPCODE_MASK));
-
-          long imm_hi;
-          long imm_lo;
-          _calc_imm(offset, &imm_hi, &imm_lo);
-          insn = (insn & 0x00000fff) | (imm_hi << 12);
-
-          _set_val((uint16_t *)addr, insn);
+        opr1 >>= 2;
+        /* check 23-bit signed */
+        if ((opr1 & ~(uint64_t)0xfffff) &&
+            (opr1 & ~(uint64_t)0xfffff) != ~(uint64_t)0xfffff) {
+          berr("opr1 = 0x%llx overflow! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_LO12_I:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
+        /*
+        * (*(uint32_t *) PC) [4 ... 0] = opr [22 ... 18]
+        * (*(uint32_t *) PC) [25 ... 10] = opr [17 ... 2]
+        */
+        *(uint32_t *)addr = (*(uint32_t *)addr & 0xfc0003e0)
+            | ((opr1 & 0x1f0000) >> 16) | ((opr1 & 0xffff) << 10);
+      }
+      break;
 
-          /* ADDI, FLW, LD, ... : I-type */
+      case R_LARCH_SOP_POP_32_S_0_10_10_16_S2:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=unknown\n",
+              _get_rname(relotype),
+              addr, _get_val((uint16_t *)addr),
+              0);
 
-          offset = (long)sym->st_value + (long)rel->r_addend;
-          uint32_t insn = _get_val((uint16_t *)addr);
+        int err = 0;
+        int64_t opr1;
 
-          long imm_hi;
-          long imm_lo;
-          _calc_imm(offset, &imm_hi, &imm_lo);
-          insn = (insn & 0x000fffff) | (imm_lo << 20);
+        err = rela_stack_pop(&opr1, rela_stack, rela_stack_top);
+        if (err)
+          return err;
 
-          _set_val((uint16_t *)addr, insn);
+        /* check 4-aligned */
+        if (opr1 % 4) {
+          berr("opr1 = 0x%llx unaligned! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_LO12_S:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
-
-          /* SW : S-type.
-           * not merge with R_RISCV_HI20 since the compiler
-           * may not generates these two instructions continuously.
-           */
-
-          offset = (long)sym->st_value + (long)rel->r_addend;
-
-          long imm_hi;
-          long imm_lo;
-          _calc_imm(offset, &imm_hi, &imm_lo);
-
-          uint32_t val =
-              (((int32_t)imm_lo >> 5) << 25) +
-              (((int32_t)imm_lo & 0x1f) << 7);
-
-          binfo("imm_lo=%ld (%lx), val=%" PRIx32 "\n", imm_lo, imm_lo, val);
-
-          _add_val((uint16_t *)addr, val);
+        opr1 >>= 2;
+        /* check 28-bit signed */
+        if ((opr1 & ~(uint64_t)0x1ffffff) &&
+            (opr1 & ~(uint64_t)0x1ffffff) != ~(uint64_t)0x1ffffff) {
+          berr("opr1 = 0x%llx overflow! dangerous %s relocation\n",
+            opr1, __func__);
+          return -ENOEXEC;
         }
-        break;
 
-      case R_RISCV_RVC_JUMP:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
-
-          /* P.111 Table 16.6 : Instruction listings for RVC */
-
-          offset = (long)sym->st_value + (long)rel->r_addend - (long)addr;
-          ASSERT(-2048 <= offset && offset <= 2047);
-
-          uint16_t val = (*(uint16_t *)addr) & 0x1ffc;
-
-          binfo("offset for C.J=%ld (0x%lx) (val=0x%04x) already set!\n",
-                offset, offset, val);
-        }
-        break;
-
-      case R_RISCV_RVC_BRANCH:
-        {
-          binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
-                "to sym=%p st_value=%08lx\n",
-                _get_rname(relotype),
-                addr, _get_val((uint16_t *)addr),
-                sym, sym->st_value);
-
-          /* P.111 Table 16.6 : Instruction listings for RVC */
-
-          offset = (long)sym->st_value + (long)rel->r_addend - (long)addr;
-          ASSERT(-256 <= offset && offset <= 255);
-
-          uint16_t val = (*(uint16_t *)addr) & 0x1c7c;
-
-          /* NOTE: we assume that a compiler adds an immediate value */
-
-          ASSERT(offset && val);
-
-          binfo("offset for C.Bx=%ld (0x%lx) (val=0x%04x) already set!\n",
-                offset, offset, val);
-        }
-        break;
-      case R_RISCV_ADD32:
-        {
-          *(uint32_t *)addr += (uint32_t)(sym->st_value + rel->r_addend);
-        }
-        break;
-      case R_RISCV_ADD64:
-        {
-          *(uint64_t *)addr += (uint64_t)(sym->st_value + rel->r_addend);
-        }
-        break;
-      case R_RISCV_SUB32:
-        {
-          *(uint32_t *)addr -= (uint32_t)(sym->st_value + rel->r_addend);
-        }
-        break;
-      case R_RISCV_SUB64:
-        {
-          *(uint64_t *)addr -= (uint64_t)(sym->st_value + rel->r_addend);
-        }
-        break;
+        /*
+        * (*(uint32_t *) PC) [9 ... 0] = opr [27 ... 18]
+        * (*(uint32_t *) PC) [25 ... 10] = opr [17 ... 2]
+        */
+        *(uint32_t *)addr = (*(uint32_t *)addr & 0xfc000000)
+            | ((opr1 & 0x3ff0000) >> 16) | ((opr1 & 0xffff) << 10);
+      }
+      break;
       default:
         berr("ERROR: Unsupported relocation: %ld\n",
              ARCH_ELF_RELTYPE(rel->r_info));

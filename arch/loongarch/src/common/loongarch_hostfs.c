@@ -31,6 +31,7 @@
 #include <string.h>
 #include <syscall.h>
 #include <unistd.h>
+#include <nuttx/irq.h>
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -156,6 +157,13 @@ ssize_t host_read(int fd, void *buf, size_t count)
   up_invalidate_dcache(buf, buf + count);
 #endif
 
+  //we need to page walk so that tlb holds the entry of read.buf, and qemu could know the paddr of read.buf
+  __asm__ __volatile__(
+    "ld.d   $t0, %0, 0 \n"
+    :
+    :"r"(read.buf)
+    :"memory", "t0"
+    );
   ret = host_call(HOST_READ, &read, sizeof(read));
 
   return ret < 0 ? ret : count - ret;

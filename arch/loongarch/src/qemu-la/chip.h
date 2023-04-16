@@ -76,12 +76,12 @@ extern void up_serialinit(void);
 #endif /* CONFIG_SMP && CONFIG_ARCH_INTERRUPTSTACK > 15 */
 
 #if CONFIG_ARCH_INTERRUPTSTACK > 15
-#if !defined(CONFIG_SMP) && defined(CONFIG_ARCH_USE_S_MODE)
+#if !defined(CONFIG_SMP) && defined(CONFIG_BUILD_KERNEL)
 .macro  setintstack tmp0, tmp1
-  csrr    \tmp0, CSR_SCRATCH
-  REGLOAD sp, RISCV_PERCPU_IRQSTACK(\tmp0)
+  csrrd    \tmp0, LOONGARCH_CSR_KS0
+  REGLOAD $sp, \tmp0, LOONGARCH_PERCPU_IRQSTACK
 .endm
-#endif /* !defined(CONFIG_SMP) && defined(CONFIG_ARCH_USE_S_MODE) */
+#endif /* !defined(CONFIG_SMP) && defined(CONFIG_BUILD_KERNEL) */
 #endif /* CONFIG_ARCH_INTERRUPTSTACK > 15 */
 
 #endif /* __ASSEMBLY__  */

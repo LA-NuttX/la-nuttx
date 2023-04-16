@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/risc-v/src/common/riscv_semihost.S
+ * arch/loongarch_semihost/src/common/loongarch_semihost.S
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -32,12 +32,7 @@
   .type smh_call @function
 
 smh_call:
-
-  idle 0
-
-/*
-  slli zero, zero, 0x1f
-  ebreak
-  srai zero, zero, 0x7
-  eret
-  */
+  slli.d $r0, $r0, 0x1f
+  dbcl  0
+  srai.d $r0, $r0, 0x7
+  jirl $r0, $r1, 0

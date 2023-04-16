@@ -106,11 +106,13 @@ void up_initial_state(struct tcb_s *tcb)
 #endif
 
   /* 
-   * Set the initial value of the prmd, ecfg
+   * Set the initial value of the prmd, crmd, ecfg
    *
    */
 
-  xcp->regs[REG_CSR_PRMD] = READ_CSR(LOONGARCH_CSR_PRMD) | CSR_PRMD_PIE | 0x00;
+  xcp->regs[REG_CSR_PRMD] = READ_CSR64(LOONGARCH_CSR_PRMD) | CSR_PRMD_PIE | 0x00;
+  xcp->regs[REG_CSR_CRMD] = (READ_CSR32(LOONGARCH_CSR_CRMD) & (~CSR_CRMD_DA)) & CSR_CRMD_PG |\
+                       1 << CSR_CRMD_DATF_SHIFT | 1 << CSR_CRMD_DATM_SHIFT;
   
-  xcp->regs[REG_CSR_ECFG] = READ_CSR(LOONGARCH_CSR_ECFG);
+  xcp->regs[REG_CSR_ECFG] = READ_CSR64(LOONGARCH_CSR_ECFG);
 }

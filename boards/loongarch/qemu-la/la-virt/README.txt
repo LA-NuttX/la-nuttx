@@ -35,3 +35,17 @@ $ make -j8
 4. Run the nuttx with qemu
 
   $ qemu-system-loongarch64 -machine virt -m 4G -cpu la464 -smp 1 -kernel ./nuttx --nographic
+
+5. TODO
+  Support kernel build.
+  Support semihosting.
+          NuttShell (NSH) NuttX-*
+          nsh> mount -t hostfs -o fs=. /host
+          nsh> cat /host/AUTHORS
+          This is a list of all the contributors that have submitted ICLA, SGA
+          If you are not on this list and believe you should be, please inform us.
+
+          ICLA
+          ====
+          ...
+          nsh>

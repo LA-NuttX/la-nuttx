@@ -145,8 +145,13 @@ bool up_checkarch(FAR const Elf_Ehdr *hdr);
 #ifdef CONFIG_LIBC_ARCH_ELF
 int up_relocate(FAR const Elf_Rel *rel, FAR const Elf_Sym *sym,
                 uintptr_t addr);
+#ifdef CONFIG_ARCH_LOONGARCH
+int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
+                   uintptr_t addr, int64_t *rela_stack, size_t *rela_stack_top);
+#else
 int up_relocateadd(FAR const Elf_Rela *rel,
                    FAR const Elf_Sym *sym, uintptr_t addr);
+#endif
 #endif
 
 /****************************************************************************

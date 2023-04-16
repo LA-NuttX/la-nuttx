@@ -225,7 +225,7 @@ static int elf_relocate(FAR struct elf_loadinfo_s *loadinfo, int relidx,
        * in a bit-field within the r_info element.
        */
 
-      symidx = ELF_R_SYM(rel->r_info);
+      symidx = ELF_R_SYM(rel->r_info);  
 
       /* First try the cache */
 
@@ -370,6 +370,10 @@ static int elf_relocateadd(FAR struct elf_loadinfo_s *loadinfo, int relidx,
   int                   ret;
   int                   i;
   int                   j;
+#ifdef CONFIG_ARCH_LOONGARCH
+  int64_t               rela_stack[CONFIG_LOONGARCH_RELA_STACK_DEPTH];
+	size_t                rela_stack_top = 0;
+#endif
 
   relas = kmm_malloc(CONFIG_ELF_RELOCATION_BUFFERCOUNT * sizeof(Elf_Rela));
   if (relas == NULL)
@@ -520,7 +524,11 @@ static int elf_relocateadd(FAR struct elf_loadinfo_s *loadinfo, int relidx,
 
       /* Now perform the architecture-specific relocation */
 
+#ifdef CONFIG_ARCH_LOONGARCH
+      ret = up_relocateadd(rela, sym, addr, rela_stack, &rela_stack_top);
+#else
       ret = up_relocateadd(rela, sym, addr);
+#endif
       if (ret < 0)
         {
           berr("ERROR: Section %d reloc %d: Relocation failed: %d\n",

@@ -187,7 +187,7 @@ skip_load_fpu:
  ****************************************************************************/
 
 #if CONFIG_ARCH_INTERRUPTSTACK > 15
-#if !defined(CONFIG_SMP)
+#if !defined(CONFIG_SMP) && defined(CONFIG_BUILD_FLAT)
 .macro  setintstack tmp0, tmp1
   la    $sp, g_intstacktop
 .endm
@@ -206,7 +206,7 @@ skip_load_fpu:
  ****************************************************************************/
 
 .macro  riscv_mhartid out
-#ifdef CONFIG_ARCH_USE_S_MODE
+#ifdef CONFIG_BUILD_KERNEL
   csrr    \out, CSR_SCRATCH
   REGLOAD \out, RISCV_PERCPU_HARTID(\out)
 #else

@@ -50,12 +50,23 @@ __start:
   /* Set stack pointer to the idle thread stack: QEMU_LA_IDLESTACK_TOP = QEMU_LA_IDLESTACK_BASE + QEMU_LA_IDLESTACK_SIZE */
 
   bnez    $a0, 1f
-  la      $t0, QEMU_LA_IDLESTACK_BASE
+  la.abs  $t0, QEMU_LA_IDLESTACK_BASE
   li.d    $t1, QEMU_LA_IDLESTACK_SIZE
   add.d   $sp, $t0, $t1
-  b       2f
-1:
 
+#ifndef CONFIG_BUILD_KERNEL
+
+	la.pcrel	t0, _sbss		# clear .bss
+ 	st.d		zero, t0, 0
+	la.pcrel	t1, _ebss - 8
+4:
+ 	addi.d		t0, t0, 8
+ 	st.d		zero, t0, 0
+ 	bne		t0, t1, 4b
+#endif
+  b       2f
+
+1:
   /* Load the number of CPUs that the kernel supports */
 
 #ifdef CONFIG_SMP
@@ -68,6 +79,7 @@ __start:
 
   blt  $a0, $t1, 3f
   /* csrw mie, zero*/
+  b 1b
   idle 0
 
 3:
@@ -100,18 +112,26 @@ __start:
 
 2:
 
-  /* Set Direct Mapping Window0: 0x9000 xxxx xxxx xxxx, PLV0, Coherent Cached */
-  li.d    $t0, 0x9000000000000011
+  /* Set Direct Mapping Window0: 0x9000 xxxx xxxx xxxx, PLV0 & PLV3, Coherent Cached */
+  li.d    $t0, 0x900000000000001b
   csrwr   $t0, LOONGARCH_CSR_DMWIN0
 
-  /* Set Direct Mapping Window1: 0x0000 xxxx xxxx xxxx, PLV0, no cache for devices, like uart */
+#ifdef CONFIG_BUILD_FLAT
+  /* Set Direct Mapping Window1: 0x0000 xxxx xxxx xxxx, PLV0, no cache for devices */
   li.d		$t0, 0x0000000000000001
 	csrwr		$t0, LOONGARCH_CSR_DMWIN1
 
   /* Disable all interrupts and set initial value in LOONGARCH_CSR_CRMD */
 
-	li.w		$t0, 0xb0                   # PLV=0, IE=0, DA=0, PG=1, DATF=01, DATM=01
+	li.w		$t0, 0xb0                   # DATM=0 1, DATF=01, PG=1, DA=0, IE=0, PLV=00
 	csrwr		$t0, LOONGARCH_CSR_CRMD
+#elif defined CONFIG_BUILD_KERNEL
+
+  /* Disable all interrupts and set initial value in LOONGARCH_CSR_CRMD */
+
+	li.w		$t0, 0xa8                   # DATM=0 1, DATF=01, PG=0, DA=1, IE=0, PLV=00
+	csrwr		$t0, LOONGARCH_CSR_CRMD
+#endif
 
   la.abs  $t0, __trap_vec
   csrwr   $t0, LOONGARCH_CSR_EENTRY

@@ -1,5 +1,5 @@
 /****************************************************************************
- * arch/risc-v/src/qemu-rv/qemu_rv_exception_m.S
+ * arch/loongarch/src/qemu-la/qemu_la_exception_m.S
  *
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -32,7 +32,7 @@
 
 #include "chip.h"
 
-#include "riscv_macros.S"
+#include "loongarch_macros.S"
 
 /****************************************************************************
  * Pre-processor Definitions
@@ -62,7 +62,7 @@
  ****************************************************************************/
 
 __trap_vec_m:
-  j    exception_m
+  b    exception_m
 
 /****************************************************************************
  * Name: exception_m
@@ -77,7 +77,8 @@ __trap_vec_m:
 .align  8
 
 exception_m:
-
+  b         exception_m
+#if 0
   /* Swap mscratch with sp */
   /* NOTE: mscratch has been set in up_mtimer_initialize() */
 
@@ -103,3 +104,4 @@ exception_m:
   /* Return from exception */
 
   mret
+#endif

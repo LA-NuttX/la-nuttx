@@ -82,8 +82,8 @@ static uint32_t g_stimer_pending = false;
 static int qemu_rv_ssoft_interrupt(int irq, void *context, void *arg)
 {
   /* Cleaer Supervisor Software Interrupt */
-
-  CLEAR_CSR(sip, SIP_SSIP);
+  assert(0);
+  // CLEAR_CSR(sip, SIP_SSIP);
 
   if (g_stimer_pending)
     {
@@ -116,12 +116,13 @@ static int qemu_rv_ssoft_interrupt(int irq, void *context, void *arg)
 
 static void qemu_rv_reload_mtimecmp(void)
 {
-  uint64_t current;
-  uint64_t next;
+  assert(0);
+  // uint64_t current;
+  // uint64_t next;
 
-  current = READ_CSR(time);
-  next = current + TICK_COUNT;
-  putreg64(next, QEMU_RV_CLINT_MTIMECMP);
+  // current = READ_CSR(time);
+  // next = current + TICK_COUNT;
+  // putreg64(next, QEMU_RV_CLINT_MTIMECMP);
 }
 
 #endif /* CONFIG_BUILD_KERNEL */
@@ -141,16 +142,11 @@ static void qemu_rv_reload_mtimecmp(void)
 
 void up_timer_initialize(void)
 {
-#ifndef CONFIG_BUILD_KERNEL
   struct oneshot_lowerhalf_s *lower = loongarch_timer_initialize(LOONGARCH_IRQ_TIMER, TIMER_FREQ);
 
   DEBUGASSERT(lower);
 
   up_alarm_set_lowerhalf(lower);
-#else
-  assert(0);
-
-#endif
 }
 
 #ifdef CONFIG_BUILD_KERNEL
@@ -165,19 +161,19 @@ void up_timer_initialize(void)
 
 void up_mtimer_initialize(void)
 {
-  uintptr_t irqstacktop = riscv_percpu_get_irqstack();
+  assert(0);
+  // uintptr_t irqstacktop = riscv_percpu_get_irqstack();
 
-  /* Set the irq stack base to mscratch */
+  // /* Set the irq stack base to mscratch */
+  // WRITE_CSR(mscratch,
+  //           irqstacktop - STACK_ALIGN_DOWN(CONFIG_ARCH_INTERRUPTSTACK));
 
-  WRITE_CSR(mscratch,
-            irqstacktop - STACK_ALIGN_DOWN(CONFIG_ARCH_INTERRUPTSTACK));
+  // /* NOTE: we do not attach a handler for mtimer,
+  //  * because it is handled in the exception_m directly
+  //  */
 
-  /* NOTE: we do not attach a handler for mtimer,
-   * because it is handled in the exception_m directly
-   */
-
-  up_enable_irq(RISCV_IRQ_MTIMER);
-  qemu_rv_reload_mtimecmp();
+  // up_enable_irq(RISCV_IRQ_MTIMER);
+  // qemu_rv_reload_mtimecmp();
 }
 
 /****************************************************************************
@@ -191,21 +187,22 @@ void up_mtimer_initialize(void)
 
 void qemu_rv_mtimer_interrupt(void)
 {
-  uint64_t current;
-  uint64_t next;
+  assert(0);
+  // uint64_t current;
+  // uint64_t next;
 
-  /* Update mtimercmp */
+  // /* Update mtimercmp */
 
-  current = getreg64(QEMU_RV_CLINT_MTIMECMP);
-  next = current + TICK_COUNT;
-  putreg64(next, QEMU_RV_CLINT_MTIMECMP);
+  // current = getreg64(QEMU_RV_CLINT_MTIMECMP);
+  // next = current + TICK_COUNT;
+  // putreg64(next, QEMU_RV_CLINT_MTIMECMP);
 
-  g_mtimer_cnt++;
-  g_stimer_pending = true;
+  // g_mtimer_cnt++;
+  // g_stimer_pending = true;
 
-  /* Post Supervisor Software Interrupt */
+  // /* Post Supervisor Software Interrupt */
 
-  SET_CSR(sip, SIP_SSIP);
+  // SET_CSR(sip, SIP_SSIP);
 }
 
 #endif /* CONFIG_BUILD_KERNEL */

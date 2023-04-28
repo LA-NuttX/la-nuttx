@@ -117,23 +117,29 @@ static const char *_get_rname(int type)
  *
  ****************************************************************************/
 
-static uint32_t _get_val(uint16_t *addr)
+static uint64_t _get_val(uint32_t *addr)
 {
-  uint32_t ret;
-  ret = *addr | (*(addr + 1)) << 16;
+  uint64_t ret;
+  ret = *addr | (*(addr + 1)) << 32;
   return ret;
 }
 
-static void _set_val(uint16_t *addr, uint32_t val)
+static void _set_val64(uint64_t *addr, uint64_t val)
 {
-  *addr       = (val & 0xffff);
-  *(addr + 1) = (val >> 16);
+  *addr       = (val & 0xffffffffffffffffULL);
 
   /* NOTE: Ensure relocation before execution */
 
   asm volatile ("dbar 0");
 }
+static void _set_val32(uint32_t *addr, uint32_t val)
+{
+  *addr       = (val & 0xffffffff);
 
+  /* NOTE: Ensure relocation before execution */
+
+  asm volatile ("dbar 0");
+}
 // static void _add_val(uint16_t *addr, uint32_t val)
 // {
 //   uint32_t cur = _get_val(addr);
@@ -348,14 +354,24 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
   switch (relotype)
     {
       case R_LARCH_32:
+      {
+        binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
+              "to sym=%p st_value=%08lx\n",
+              _get_rname(relotype),
+              addr, _get_val((uint32_t *)addr),
+              sym, sym->st_value);
+        _set_val32((uint32_t *)addr, (uint32_t)(sym->st_value + rel->r_addend));
+      }
+      break;
+
       case R_LARCH_64:
       {
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=%08lx\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               sym, sym->st_value);
-        _set_val((uint16_t *)addr, (uint32_t)(sym->st_value + rel->r_addend));
+        _set_val64((uint64_t *)addr, (uint64_t)(sym->st_value + rel->r_addend));
       }
       break;
 
@@ -364,7 +380,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=%08lx\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               sym, sym->st_value);
 
         rela_stack_push((long)sym->st_value + (long)rel->r_addend - (long)addr, rela_stack, rela_stack_top);
@@ -375,10 +391,17 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         
-        rela_stack_push(0 + (long)rel->r_addend, rela_stack, rela_stack_top);
+        // rela_stack_push(0 + (long)rel->r_addend, rela_stack, rela_stack_top);
+        // rela_stack_push((long)sym->st_value +(long)rel->r_addend, rela_stack, rela_stack_top);
+        if(sym){
+          rela_stack_push((long)sym->st_value +(long)rel->r_addend, rela_stack, rela_stack_top);
+          bwarn("This condition never encountered so far!\n");
+        }else{
+          rela_stack_push(0 + (long)rel->r_addend, rela_stack, rela_stack_top);          
+        }
       }
       break;
 
@@ -390,7 +413,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=%08lx\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               sym, sym->st_value);
 
         rela_stack_push((long)sym->st_value + (long)rel->r_addend - (long)addr, rela_stack, rela_stack_top);
@@ -402,7 +425,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
 
         int err = 0;
@@ -425,7 +448,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
 
         int err = 0;
@@ -448,7 +471,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         int err = 0;
         int64_t opr1, opr2;
@@ -470,7 +493,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         int err = 0;
         int64_t opr1, opr2;
@@ -492,7 +515,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
 
         int err = 0;
@@ -519,7 +542,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         
         int err = 0;
@@ -556,7 +579,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         int err = 0;
         int64_t opr1;
@@ -583,7 +606,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
         int err = 0;
         int64_t opr1;
@@ -622,7 +645,7 @@ int up_relocateadd(const Elf_Rela *rel, const Elf_Sym *sym,
         binfo("%s at %08" PRIxPTR " [%08" PRIx32 "] "
               "to sym=%p st_value=unknown\n",
               _get_rname(relotype),
-              addr, _get_val((uint16_t *)addr),
+              addr, _get_val((uint64_t *)addr),
               0);
 
         int err = 0;

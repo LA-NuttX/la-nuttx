@@ -174,7 +174,6 @@ uintptr_t sys_call6(unsigned int nbr, uintptr_t parm1, uintptr_t parm2,
 
 static inline uintptr_t sys_call0(unsigned int nbr)
 {
-  assert(0);
   register long r0 asm("a0") = (long)(nbr);
 
   asm volatile
@@ -252,7 +251,6 @@ static inline uintptr_t sys_call2(unsigned int nbr, uintptr_t parm1,
 static inline uintptr_t sys_call3(unsigned int nbr, uintptr_t parm1,
                                   uintptr_t parm2, uintptr_t parm3)
 {
-  assert(0);
   register long r0 asm("a0") = (long)(nbr);
   register long r1 asm("a1") = (long)(parm1);
   register long r2 asm("a2") = (long)(parm2);
@@ -282,7 +280,6 @@ static inline uintptr_t sys_call4(unsigned int nbr, uintptr_t parm1,
                                   uintptr_t parm2, uintptr_t parm3,
                                   uintptr_t parm4)
 {
-  assert(0);
   register long r0 asm("a0") = (long)(nbr);
   register long r1 asm("a1") = (long)(parm1);
   register long r2 asm("a2") = (long)(parm2);
@@ -344,9 +341,8 @@ static inline uintptr_t sys_call5(unsigned int nbr, uintptr_t parm1,
 static inline uintptr_t sys_call6(unsigned int nbr, uintptr_t parm1,
                                   uintptr_t parm2, uintptr_t parm3,
                                   uintptr_t parm4, uintptr_t parm5,
-                                  uintptr_t parm6)
+                                  uintptr_t parm6)                            
 {
-  assert(0);
   register long r0 asm("a0") = (long)(nbr);
   register long r1 asm("a1") = (long)(parm1);
   register long r2 asm("a2") = (long)(parm2);
@@ -362,7 +358,7 @@ static inline uintptr_t sys_call6(unsigned int nbr, uintptr_t parm1,
      : "memory"
      );
 
-  asm volatile("nop");
+  asm volatile("nop": "=r"(r0));
 
   return r0;
 }

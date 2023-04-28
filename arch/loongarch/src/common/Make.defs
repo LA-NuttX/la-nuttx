@@ -24,7 +24,7 @@ CMN_ASRCS += loongarch_exception_tlb.S
 endif
 
 # Specify our general Assembly files
-CMN_ASRCS += loongarch_vectors.S loongarch_exception_common.S loongarch_mhartid.S
+CMN_ASRCS += loongarch_vectors.S loongarch_exception_common.S loongarch_mhartid.S dispatch_syscall.S
 
 # Specify C code within the common directory to be included
 CMN_CSRCS += loongarch_initialize.c loongarch_swint.c loongarch_timer.c

@@ -109,32 +109,7 @@ static void riscv_registerdump(const uintptr_t *regs)
  ****************************************************************************/
 
 #ifdef CONFIG_LIB_SYSCALL
-static inline void dispatch_syscall(void)
-{
-  asm volatile
-    (
-     "addi.d $sp, $sp, -" STACK_FRAME_SIZE "\n"     /* Create a stack frame to hold ra */
-     REGSTORE " $ra, $sp, 0\n"                      /* Save ra in the stack frame */
-     "la.abs   $t0, g_stublookup\n"                 /* t0=The base of the stub lookup table */
-#ifdef CONFIG_ARCH_LA32
-     "slli.d  $a0, $a0, 2\n"                        /* a0=Offset for the stub lookup table */
-#else
-     "slli.d  $a0, $a0, 3\n"                        /* a0=Offset for the stub lookup table */
-#endif
-     "add.d  $t0, $t0, $a0\n"                       /* t0=The address in the table */
-     REGLOAD " $t0, $t0, 0\n"                       /* t0=The address of the stub for this syscall */
-     "jirl   $ra, $t0, 0\n"                         /* Call the stub (modifies ra) */
-     REGLOAD " $ra, $sp, 0\n"                       /* Restore ra */
-     "addi.d  $sp, $sp, " STACK_FRAME_SIZE "\n"     /* Destroy the stack frame */
-     "move   $a2, $a0\n"                            /* a2=Save return value in a0 */
-     "li.d   $a0, 3\n"                              /* a0=SYS_syscall_return (3) */
-#ifdef CONFIG_BUILD_KERNEL
-     "b    sys_call2"                               /* Return from the syscall */
-#else
-     "syscall 0"                                    /* Return from the syscall */
-#endif
-  );
-}
+extern void dispatch_syscall(void);
 #endif
 
 /****************************************************************************
@@ -186,7 +161,7 @@ int loongarch_swint(int irq, void *context, void *arg)
       case SYS_save_context:
         {
           DEBUGASSERT(regs[REG_A1] != 0);
-          riscv_copystate((uintptr_t *)regs[REG_A1], regs);
+          loongarch_copystate((uintptr_t *)regs[REG_A1], regs);
         }
         break;
 
@@ -516,7 +491,7 @@ int loongarch_swint(int irq, void *context, void *arg)
           regs[REG_EPC]        = (uintptr_t)dispatch_syscall;
 
 #ifndef CONFIG_BUILD_FLAT
-          regs[REG_CSR_PRMD]   &= PLV_KERN<<CSR_PRMD_PPLV_SHIFT; /* Privileged mode */
+          regs[REG_CSR_PRMD]   &= (~CSR_PRMD_PPLV); /* Privileged mode */
 #endif
 
           /* Offset A0 to account for the reserved values */

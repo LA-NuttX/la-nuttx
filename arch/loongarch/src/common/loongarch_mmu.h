@@ -271,23 +271,22 @@ static inline void mmu_invalidate_tlb_by_vaddr(uintptr_t vaddr)
 }
 
 /****************************************************************************
- * Name: mmu_invalidate_tlbs
+ * Name: mmu_invalidate_all_tlbs
  *
  * Description:
  *   Flush the entire TLB
  *
  ****************************************************************************/
 
-static inline void mmu_invalidate_tlbs(void)
+static inline void mmu_invalidate_all_tlbs(void)
 {
-  assert(0);
-  // __asm__ __volatile__
-  //   (
-  //     "sfence.vma x0, x0\n"
-  //     :
-  //     :
-  //     : "memory"
-  //   );
+  __asm__ __volatile__
+    (
+      "invtlb 0x0, $r0, $r0\n"
+      :
+      :
+      : "memory"
+    );
 }
 /****************************************************************************
  * Name: qemu_la_set_asid
@@ -320,6 +319,7 @@ static inline void qemu_la_set_asid(uint16_t asid){
 static inline uint64_t qemu_la_set_pgdh(uint64_t paddr){
 
   WRITE_CSR64(LOONGARCH_CSR_PGDH, paddr);
+  mmu_invalidate_all_tlbs();
   
   return READ_CSR64(LOONGARCH_CSR_PGDH);
 }

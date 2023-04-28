@@ -64,7 +64,7 @@
 #define  CSR_PRMD_PIE			((0x1) << CSR_PRMD_PIE_SHIFT)
 #define  CSR_PRMD_PPLV_SHIFT		0
 #define  CSR_PRMD_PPLV_WIDTH		2
-#define  CSR_PRMD_PPLV			(UINT64_C(0x3) << CSR_PRMD_PPLV_SHIFT)
+#define  CSR_PRMD_PPLV			((0x3) << CSR_PRMD_PPLV_SHIFT)
 
 #define LOONGARCH_CSR_EUEN		0x2	/* Extended unit enable */
 #define  CSR_EUEN_LBTEN_SHIFT		3

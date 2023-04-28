@@ -449,7 +449,7 @@ int up_addrenv_create(size_t textsize, size_t datasize, size_t heapsize,
 
   /* Provide the satp value for context switch */
 
-  addrenv->pgdh = qemu_la_set_pgdh(addrenv->spgtables[0]);
+  addrenv->pgdh = addrenv->spgtables[0];
   addrenv->pgdl = g_kernel_mappings;
 
   /* When all is set and done, flush the data caches */
@@ -693,7 +693,6 @@ int up_addrenv_select(const group_addrenv_t *addrenv,
     }
 
   qemu_la_set_pgdh(addrenv->pgdh);
-  qemu_la_set_pgdl(addrenv->pgdl);
   return OK;
 }
 

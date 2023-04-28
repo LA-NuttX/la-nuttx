@@ -308,7 +308,7 @@ loongarch_timer_initialize(int irq, uint64_t freq)
       priv->freq      = freq;
       
       irq_attach(irq,loongarch_timer_interrupt,priv);
-      up_enable_irq(irq);
+      // up_enable_irq(irq);
 
     }
 

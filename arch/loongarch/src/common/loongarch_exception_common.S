@@ -79,24 +79,28 @@
 exception_common:
 
   addi.d      $sp, $sp, -XCPTCONTEXT_SIZE
-  save_ctx    $sp
 
-  addi.d      $s0, $sp, XCPTCONTEXT_SIZE
-  REGSTORE    $s0, $sp, REG_SP          /* original SP */
+  save_ctx    $sp                       /* save general registers first */
 
-  csrrd       $s0, LOONGARCH_CSR_EUEN
-  REGSTORE    $s0, $sp, REG_CSR_EUEN    /* csr: store euen */
-
-  csrrd       $s0, LOONGARCH_CSR_ECFG
-  REGSTORE    $s0, $sp, REG_CSR_ECFG    /* csr: store ecfg */
-
-  csrrd       $s0, LOONGARCH_CSR_PRMD
-  REGSTORE    $s0, $sp, REG_CSR_PRMD    /* csr: store prmd */
+  loongarch_savefpu   $sp
 
   csrrd       $s0, LOONGARCH_CSR_ERA
   REGSTORE    $s0, $sp, REG_EPC         /* exception PC */
 
-  loongarch_savefpu   $sp
+  addi.d      $s0, $sp, XCPTCONTEXT_SIZE
+  REGSTORE    $s0, $sp, REG_SP          /* original SP */
+
+  csrrd       $s0, LOONGARCH_CSR_CRMD
+  REGSTORE    $s0, $sp, REG_CSR_CRMD    /* csr: store crmd */
+
+  csrrd       $s0, LOONGARCH_CSR_PRMD
+  REGSTORE    $s0, $sp, REG_CSR_PRMD    /* csr: store prmd */
+
+  csrrd       $s0, LOONGARCH_CSR_ECFG
+  REGSTORE    $s0, $sp, REG_CSR_ECFG    /* csr: store ecfg */
+
+  csrrd       $s0, LOONGARCH_CSR_EUEN
+  REGSTORE    $s0, $sp, REG_CSR_EUEN    /* csr: store euen */
 
   /* Setup arg0(with exception or irq number info), arg1(context) */
 
@@ -132,10 +136,11 @@ exception_common:
 
   move        $sp, $a0
 
-  loongarch_loadfpu   $sp
-
   REGLOAD     $s0, $sp, REG_EPC         /* restore exception PC */
   csrwr       $s0, LOONGARCH_CSR_ERA
+
+  REGLOAD     $s0, $sp, REG_CSR_CRMD    /* csr: restore crmd */
+  csrwr       $s0, LOONGARCH_CSR_CRMD
 
   REGLOAD     $s0, $sp, REG_CSR_PRMD    /* csr: restore prmd */
   csrwr       $s0, LOONGARCH_CSR_PRMD
@@ -146,10 +151,11 @@ exception_common:
   REGLOAD     $s0, $sp, REG_CSR_EUEN    /* csr: restore euen */
   csrwr       $s0, LOONGARCH_CSR_EUEN
 
-  load_ctx    $sp
+  loongarch_loadfpu   $sp
+
+  load_ctx    $sp                       /* load general registers finally  */
 
   REGLOAD     $sp, $sp, REG_SP          /* restore original sp */
-
   /* Return from exception */
   ertn
 

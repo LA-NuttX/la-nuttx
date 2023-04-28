@@ -46,12 +46,12 @@
  ****************************************************************************/
 
 /****************************************************************************
- * Name: riscv_copystate
+ * Name: loongarch_copystate
  ****************************************************************************/
 
 /* A little faster than most memcpy's */
 
-void riscv_copystate(uintptr_t *dest, uintptr_t *src)
+void loongarch_copystate(uintptr_t *dest, uintptr_t *src)
 {
   int i;
 

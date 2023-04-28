@@ -64,32 +64,27 @@ int main(int argc, char *argv[]);
  *
  ****************************************************************************/
 
-// static void sig_trampoline(void) naked_function;//naked function is not supported
-static void sig_trampoline(void)
+static inline void sig_trampoline(void)
 {
+  assert(0);
   __asm__ __volatile__
   (
-    "dbcl 0"
+    " addi.d $sp, $sp, -" STACK_FRAME_SIZE "\n"   /* Save ra on the stack */
+    REGSTORE " $ra, $sp, 0\n"
+    " move   $t0, $a0\n"        /* t0=sighand */
+    " move   $a0, $a1\n"        /* a0=signo */
+    " move   $a1, $a2\n"        /* a1=info */
+    " move   $a2, $a3\n"        /* a2=ucontext */
+    " jirl   $ra, $t0, 0\n"     /* Call the signal handler (modifies ra) */
+    REGLOAD "$ra, $sp, 0\n"     /* Recover ra in sp */
+    " addi.d $sp, $sp, " STACK_FRAME_SIZE "\n"
+    " li.d   $a0, %0\n"         /* SYS_signal_handler_return */
+    " syscall 0\n"              /* Return from the SYSCALL */
+    " nop\n"
+    :
+    : "i" (SYS_signal_handler_return)
+    :
   );
-  assert(0);
-  // __asm__ __volatile__
-  // (
-  //   " addi sp, sp, -" STACK_FRAME_SIZE "\n"   /* Save ra on the stack */
-  //   REGSTORE " ra, 0(sp)\n"
-  //   " mv   t0, a0\n"        /* t0=sighand */
-  //   " mv   a0, a1\n"        /* a0=signo */
-  //   " mv   a1, a2\n"        /* a1=info */
-  //   " mv   a2, a3\n"        /* a2=ucontext */
-  //   " jalr t0\n"            /* Call the signal handler (modifies ra) */
-  //   REGLOAD " ra, 0(sp)\n"  /* Recover ra in sp */
-  //   " addi sp, sp, " STACK_FRAME_SIZE "\n"
-  //   " li   a0, %0\n"        /* SYS_signal_handler_return */
-  //   " ecall\n"              /* Return from the SYSCALL */
-  //   " nop\n"
-  //   :
-  //   : "i" (SYS_signal_handler_return)
-  //   :
-  // );
 }
 
 /****************************************************************************

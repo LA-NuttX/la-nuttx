@@ -201,7 +201,7 @@ void loongarch_addregion(void);
 
 void riscv_ack_irq(int irq);
 
-void riscv_copystate(uintptr_t *dest, uintptr_t *src);
+void loongarch_copystate(uintptr_t *dest, uintptr_t *src);
 
 void loongarch_sigdeliver(void);
 int loongarch_swint(int irq, void *context, void *arg);

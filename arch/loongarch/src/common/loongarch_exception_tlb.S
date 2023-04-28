@@ -57,6 +57,10 @@ tlb_refill_entry:
   csrwr $t1, LOONGARCH_CSR_KS8
   csrwr $t2, LOONGARCH_CSR_KS7
   csrwr $t3, LOONGARCH_CSR_KS6
+  csrwr $t4, LOONGARCH_CSR_KS5
+  csrwr $t5, LOONGARCH_CSR_KS4
+
+  csrrd $t5, LOONGARCH_CSR_TLBRBADV
 
   /* get the addr of root page table */
   csrrd $t0, LOONGARCH_CSR_PGD
@@ -84,5 +88,6 @@ tlb_refill_entry:
   csrwr $t1, LOONGARCH_CSR_KS8
   csrwr $t2, LOONGARCH_CSR_KS7
   csrwr $t3, LOONGARCH_CSR_KS6
-  
+  csrwr $t4, LOONGARCH_CSR_KS5
+  csrwr $t5, LOONGARCH_CSR_KS4
   ertn

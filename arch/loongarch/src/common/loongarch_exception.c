@@ -81,11 +81,9 @@ static const char *g_reasons_str[LOONGARCH_MAX_EXCEPTION + 1] =
 
 int loongarch_exception(int ecode, void *regs, void *args)
 {
-  _alert("EXCEPTION NUMBER: %s. ECODE: %" PRIxREG ", ESTAT: %" PRIxREG ", BADV: %" PRIxREG "\n",
+  _alert("EXCEPTION: %s. ECODE: %" PRIxREG ", ESTAT: %" PRIxREG ", BADV: %" PRIxREG "\n",
         ecode > LOONGARCH_MAX_EXCEPTION? "Unknown" : g_reasons_str[ecode],
-        ecode, 
-        READ_CSR64(LOONGARCH_CSR_ESTAT),
-        READ_CSR64(LOONGARCH_CSR_BADV));
+        ecode, READ_CSR64(LOONGARCH_CSR_ESTAT), READ_CSR64(LOONGARCH_CSR_BADV));
 
   _alert("PANIC!!! Exception = %" PRIxREG "\n", ecode);
   up_irq_save();

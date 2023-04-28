@@ -106,8 +106,8 @@ sys_call6:
 1:
   REGSTORE  $s0, $sp, REG_CSR_CRMD        /* store crmd to context */
 
-  li.d      $s1, PLV_KERN<<CSR_PRMD_PPLV_SHIFT
-  or        $s2, $s2, $s1
+  li.d      $s1, ~CSR_PRMD_PPLV           /* set previous privilege */
+  and       $s2, $s2, $s1
   REGSTORE  $s2, $sp, REG_CSR_PRMD        /* store prmd to context */
   
 

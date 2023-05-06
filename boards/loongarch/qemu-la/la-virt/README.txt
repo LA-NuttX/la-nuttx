@@ -37,8 +37,6 @@ $ make -j8
   $ qemu-system-loongarch64 -machine virt -m 4G -cpu la464 -smp 1 -kernel ./nuttx --nographic
 
 5. TODO
-  Support kernel build.
-  Support semihosting.
           NuttShell (NSH) NuttX-*
           nsh> mount -t hostfs -o fs=. /host
           nsh> cat /host/AUTHORS

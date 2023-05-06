@@ -56,13 +56,13 @@ __start:
 
 #ifndef CONFIG_BUILD_KERNEL
 
-	la.pcrel	t0, _sbss		# clear .bss
- 	st.d		zero, t0, 0
-	la.pcrel	t1, _ebss - 8
+	la.pcrel  $t0, _sbss		# clear .bss
+ 	st.d      $r0, $t0, 0
+	la.pcrel  $t1, _ebss + 8
 4:
- 	addi.d		t0, t0, 8
- 	st.d		zero, t0, 0
- 	bne		t0, t1, 4b
+ 	addi.d    $t0, $t0, 8
+ 	st.d      $r0, $t0, 0
+ 	bne       $t0, $t1, 4b
 #endif
   b       2f
 
@@ -116,10 +116,11 @@ __start:
   li.d    $t0, 0x900000000000001b
   csrwr   $t0, LOONGARCH_CSR_DMWIN0
 
-#ifdef CONFIG_BUILD_FLAT
   /* Set Direct Mapping Window1: 0x0000 xxxx xxxx xxxx, PLV0, no cache for devices */
   li.d		$t0, 0x0000000000000001
 	csrwr		$t0, LOONGARCH_CSR_DMWIN1
+  
+#ifdef CONFIG_BUILD_FLAT
 
   /* Disable all interrupts and set initial value in LOONGARCH_CSR_CRMD */
 

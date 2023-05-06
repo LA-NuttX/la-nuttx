@@ -343,8 +343,7 @@ int loongarch_swint(int irq, void *context, void *arg)
 
           regs[REG_A0]       = regs[REG_A2];  /* pthread entry */
           regs[REG_A1]       = regs[REG_A3];  /* arg */
-          assert(0);
-          // regs[REG_INT_CTX] &= ~STATUS_PPP;   /* User mode */
+          regs[REG_CSR_PRMD] |= PLV_USER;     /* User mode */
         }
         break;
 #endif

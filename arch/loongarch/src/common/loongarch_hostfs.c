@@ -138,85 +138,24 @@ int host_close(int fd_)
 }
 
 ssize_t host_read(int fd, void *buf, size_t count)
-{
-  ssize_t totalSize = count;
-  ssize_t ret = 0;
-  ssize_t once;
-
+{  
   struct
   {
     long fd;
     void *buf;
     size_t count;
-  } read;
+  } read =
+  {
+    .fd = fd,
+    .buf = buf,
+    .count = count,
+  };
 
-  read.fd = fd;
-  read.buf = buf;
+  ssize_t ret;
 
-  while(count > 0){
+  ret = host_call(HOST_READ, &read, sizeof(read));
 
-    //Need to page walk so that tlb holds the entry of read.buf, and qemu could know the paddr of read.buf
-    __asm__ __volatile__("ld.d $t0, %0, 0"::"r"(read.buf):"memory", "t0");
-
-    if(count <= CONFIG_MM_PGSIZE){
-      read.count = count;
-      //in case that the count crossed two pages
-      __asm__ __volatile__("ld.d $t0, %0, 0"::"r"(read.buf+read.count):"memory", "t0");
-
-      once = host_call(HOST_READ, &read, sizeof(read));
-      if(once < 0){
-        return once;
-      }else{
-        ret += once;
-      }
-      count = 0;
-    }else{
-      read.count = CONFIG_MM_PGSIZE;
-      //in case that the count crossed two pages
-      __asm__ __volatile__("ld.d $t0, %0, 0"::"r"(read.buf+read.count):"memory", "t0");
-
-      once = host_call(HOST_READ, &read, sizeof(read));
-      if(once < 0){
-        return once;
-      }else{
-        ret += once;
-      }
-      read.buf += CONFIG_MM_PGSIZE;
-      count -= CONFIG_MM_PGSIZE;
-    }
-  }
-
-  return totalSize - ret;
-  
-//   assert(0);
-//   struct
-//   {
-//     long fd;
-//     void *buf;
-//     size_t count;
-//   } read =
-//   {
-//     .fd = fd,
-//     .buf = buf,
-//     .count = count,
-//   };
-
-//   ssize_t ret;
-
-// #ifdef CONFIG_RISCV_SEMIHOSTING_HOSTFS_CACHE_COHERENCE
-//   up_invalidate_dcache(buf, buf + count);
-// #endif
-
-//   //we need to page walk so that tlb holds the entry of read.buf, and qemu could know the paddr of read.buf
-//   __asm__ __volatile__(
-//     "ld.d   $t0, %0, 0 \n"
-//     :
-//     :"r"(read.buf)
-//     :"memory", "t0"
-//     );
-//   ret = host_call(HOST_READ, &read, sizeof(read));
-
-//   return ret < 0 ? ret : count - ret;
+  return ret < 0 ? ret : count - ret;
 }
 
 ssize_t host_write(int fd, const void *buf, size_t count)

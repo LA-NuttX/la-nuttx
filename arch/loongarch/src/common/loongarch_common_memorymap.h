@@ -79,8 +79,8 @@ EXTERN uint8_t _etext[];           /* End_1 of .text + .rodata */
 EXTERN const uint8_t _eronly[];    /* End+1 of read only section (.text + .rodata) */
 EXTERN uint8_t _sdata[];           /* Start of .data */
 EXTERN uint8_t _edata[];           /* End+1 of .data */
-EXTERN uint8_t _sbss[];            /* Start of .bss */
-EXTERN uint8_t _ebss[];            /* End+1 of .bss */
+EXTERN uint64_t _sbss[];            /* Start of .bss */
+EXTERN uint64_t _ebss[];            /* End+1 of .bss */
 EXTERN uint8_t _stdata[];          /* Start of .tdata */
 EXTERN uint8_t _etdata[];          /* End+1 of .tdata */
 EXTERN uint8_t _stbss[];           /* Start of .tbss */
